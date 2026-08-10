@@ -421,63 +421,6 @@ body {
   color: var(--text-dim);
 }
 
-/* --- page views ---
-   No follower or subscriber counts anywhere on this page, at the owner's
-   request. This is the page's own hit counter, which is a different number about
-   a different thing, and it is the only reason .stats exists.
-
-   width: 100% is load-bearing even with one child — shrink-to-fit sized this box
-   to 242px on the sibling site while its contents needed 243, and the pill
-   wrapped to a second line over one pixel of rounding. */
-.stats {
-  width: 100%;
-  margin-top: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* Deliberately quiet: no border, no backdrop blur. It is a footnote that happens
-   to live up here next to the hero. */
-.views {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-dim);
-  transition: background 0.4s var(--ease), color 0.4s var(--ease);
-}
-
-.views:hover {
-  background: rgba(200, 138, 224, 0.16);
-  color: var(--orchid);
-}
-
-.views__icon {
-  width: 0.95rem;
-  height: 0.95rem;
-  flex: none;
-  display: block;
-}
-
-.views__n {
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-  transition: opacity 0.4s var(--ease);
-}
-
-.views[data-state="loading"] .views__n { opacity: 0.4; }
-
-/* both counter services down — take the whole pill away rather than leaving an
-   eye staring at an em dash */
-.views[data-state="dead"] { display: none; }
-
 /* ==========================================================================
    Link tiles
    ========================================================================== */
@@ -1153,8 +1096,6 @@ html.gated body { overflow: hidden; }
   .avatar { width: 7rem; height: 7rem; margin-bottom: 1rem; }
   .name { font-size: clamp(1.9rem, 6vw, 2.25rem); }
   .bio { margin-top: 0.6rem; }
-  /* .stats, not its child — a margin on the pill knocks it out of the row */
-  .stats { margin-top: 1.1rem; }
   .links { gap: 0.55rem; }
   .tile { padding: 0.8rem 1.05rem; }
   .foot { margin-top: 1.2rem; }
@@ -1167,7 +1108,6 @@ html.gated body { overflow: hidden; }
   .avatar { width: 5.6rem; height: 5.6rem; margin-bottom: 0.7rem; }
   .kana { margin-top: 0.35rem; }
   .bio { margin-top: 0.45rem; font-size: 0.88rem; }
-  .stats { margin-top: 0.8rem; }
   .links { gap: 0.45rem; }
   .tile { padding: 0.65rem 1rem; border-radius: 0.85rem; }
   .tile__icon { width: 2.1rem; height: 2.1rem; }

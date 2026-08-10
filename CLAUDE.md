@@ -26,18 +26,23 @@ GitHub Pages records himself and they are correct: four A records
 Repo `BlissolicPY/delpog` (public, `main`). See "Deploying" below for the state of the
 Pages setup and the DNS delegation.
 
-## The one thing she asked for that changes the code
-**No follower, subscriber or member counts anywhere.** This is not "fetched and hidden" —
-`main.js` does not fetch them at all, and there is no `.tile__count`, no `.subs` pill and
-no `--brand`-tinted count styling. That deletes the whole socialcounts / mixerno /
-Discord-invite chain the sibling sites carry, and with it every problem that came with it
-(two sources disagreeing by a notch, mixerno returning counts as strings, CORS that can
-only be tested from the page).
+## No numbers on this page at all
+**No follower, subscriber or member counts, and no page-view counter.** None of it is
+"fetched and hidden" — nothing is fetched. There is no `.tile__count`, no `.subs` pill, no
+`.stats` row, no `.views` styling, and **no `main.js`** (it existed only to drive the view
+counter, so it was deleted rather than left as an empty file). That removes the whole
+socialcounts / mixerno / Discord-invite chain the sibling sites carry, and with it every
+problem that came with it — two sources disagreeing by a notch, mixerno returning counts as
+strings, CORS that can only be tested from the page, and a public counter URL anyone could
+inflate.
 
-The **page-view counter stays**, because it is a different number about a different
-thing — it counts hits on the page, not people following her. If she ever objects, delete
-the `.stats` block from `index.html` and `showViews()` from `main.js`; nothing else
-depends on either.
+The counts went first, at her request. The **view counter went too**, on the owner's
+explicit follow-up — it was initially kept on the reasoning that a page-hit count is a
+different number about a different thing, and that reasoning was overruled. Do not
+reintroduce either without being asked.
+
+Consequences to keep in mind if anything is added back: the reveal stagger runs `--i:0`
+through `--i:8` with no gaps, and the `abacus.jasoncameron.dev` preconnect is gone.
 
 ## Palette — why this pair of sources works
 Sampled the same way as the siblings: 4-bit-per-channel bucket quantisation, over the
@@ -224,7 +229,9 @@ in a real browser.
   stylesheet and the change silently does not appear.
 - `butterflies.css` / `butterflies.js` — the entrance burst and the ambient drift. See
   "The butterflies" below.
-- `main.js` — the page-view counter, and nothing else.
+- **There is no `main.js`.** It held the page-view counter and nothing else, so it was
+  deleted with it rather than left as an empty file. If you add page logic later, add the
+  `<script>` tag back too — nothing currently references it.
 - `player.js` — the hidden YouTube IFrame player and the "now playing" card.
 - `cursor.js` — the speed-stretched cursor glow. It resolves `--rose`, `--orchid` and
   `--violet` from the stylesheet and builds the gradient in JS, because the gradient needs
