@@ -1,19 +1,35 @@
 /* ==========================================================================
    delpog
 
-   The palette was sampled from the avatar that was on her Linktree
-   (assets/pfp-hamster-linktree.png — a hamster in headphones in front of a
-   pink-and-purple RGB battlestation) and from the background photograph she chose
-   (assets/bg.jpg — a hazy pink dawn over a city skyline).
+   READ THIS BEFORE TRUSTING THE SWATCH COMMENTS BELOW. Both source images have
+   been replaced since the palette was derived, on request, and the swatches were
+   deliberately NOT re-derived — because they still hold. The history matters only
+   so nobody "fixes" a comment into a lie.
 
-   The interesting thing about that pair, and the reason the page works: the two
-   sources look like the same colour at a glance and are not. The avatar was
-   violet-dominant — 37.8% of its chromatic pixels H240-269 indigo, 23.4% H270-299
-   purple, only 8.0% in the magenta band. The photograph is the mirror image:
-   75.9% H330-359 rose, 21.5% H300-329 magenta, and no indigo at all. So they
-   overlapped only in H300-329, and everything here is built to sit in or beside
-   that overlap. That is where --orchid comes from, and it is why an indigo accent
-   and a rose accent can share a tile without arguing.
+   The palette was originally sampled from two things: the avatar that was then on
+   her Linktree (kept as assets/pfp-hamster-linktree.png — a hamster in headphones
+   in front of a pink-and-purple RGB battlestation) and a hazy pink dawn over a city
+   skyline. The avatar supplied the violet end — 37.8% of its chromatic pixels
+   H240-269 indigo, 23.4% H270-299 purple, only 8.0% magenta — and the photograph
+   was its mirror image, 75.9% H330-359 rose with no indigo at all. They overlapped
+   only in H300-329, which is exactly where --orchid sits, and that is why an indigo
+   accent and a rose accent can share a tile without arguing.
+
+   What is on the page now:
+     assets/pfp.png   her real TikTok avatar — two pink pixel-art hearts on
+                      near-white. Samples #F8B8D8 / #E888B8, i.e. H330: within a
+                      few degrees of --rose. Supplies no violet.
+     assets/bg.jpg    a flat-art lakeside sunset (her choice). 100% chromatic,
+                      mean luma 87.7, and unlike either original source it spans
+                      the WHOLE palette on its own — H300-329 34%, H330-359 27%,
+                      H240-269 26%, H270-299 11%, dominant #282868 (H240 L28) in
+                      the foreground and #883878 (H312 L37) in the sky.
+
+   So the accents are better grounded now than when they were derived: the current
+   background alone contains the rose, the orchid AND the indigo, where the first
+   pair needed two images between them to cover the same span. The rose-*
+   swatches below name percentages from the OLD background — the values are still
+   the ones the page uses, the percentages are historical.
 
    NOTE, and do not be confused by it: the hero image is no longer that avatar.
    On request it was swapped to her actual TikTok avatar (assets/pfp.png — two pink
@@ -128,7 +144,7 @@ body {
 }
 
 /* ==========================================================================
-   Background — pink dawn over a skyline, drifting aurora, grain + scanlines
+   Background — flat-art lakeside sunset, drifting aurora, grain + scanlines
    ========================================================================== */
 
 .bg {
@@ -145,27 +161,25 @@ body {
    recomposites constantly. assets/bg.jpg is the untouched crop, kept to
    re-derive from; nothing loads it.
 
-   What is baked in, and why it is not just the sibling site's recipe:
+   The current source barely needs grading, and that is the whole story. It is a
+   flat-art lakeside sunset, 3840x2160, already 100% chromatic at mean luma 87.7,
+   already dark in the foreground where the tiles sit and bright only in the sky.
+   So the bake is just:
 
-   This source is pale — mean luma 177.9, and its dominant bucket is #F8D8D8,
-   which is white with a 32-point RGB spread. Multiplying that down the way
-   MangoPlayz darkened its sunset turns it GREY, not dark pink: at 0.5 brightness
-   the whole image measured H0 S18, and the dawn she picked it for was gone. Low
-   chroma survives darkening badly.
+       scale=1600:900, eq=saturation=0.96,
+       lutrgb=val*0.85, gblur=sigma=0.8      ->  baked mean luma 74.5
 
-   So the chroma goes up before the light comes down. In order:
-   `saturation=1.85, contrast=1.12` — the contrast is what keeps the skyline
-   reading as a silhouette instead of dissolving into the fog once it is dark;
-   `colorchannelmixer=rr=1.06:gg=0.86:bb=1.00`, which pushes the greys off neutral
-   without over-blueing them (an earlier pass used bb=1.14 and landed on H320
-   magenta — technically in the palette, but it threw away the pink the picture was
-   chosen for; this holds H330-340); then `brightness *0.60` and `gblur=sigma=1.6`.
+   0.8px of blur is there only to stop the gradient banding once JPEG quantises it;
+   the saturation nudge stops the sky vibrating against the tile accents.
 
-   Result: dominant #987888 at H330, mean luma 105.0. That is deliberately BRIGHTER
-   than the MangoPlayz photo's 73.8, and the reason is that this page's scrim is
-   much weaker than that one's. Judged as a pair, the composited page lands in the
-   same place; judged as a file, this one looks pale. Do not "fix" it to 73 without
-   also strengthening .scrim, or the dawn goes flat grey again.
+   Worth knowing what this replaced, because it explains why the recipe used to be
+   elaborate: the previous background was a photograph of pink fog whose dominant
+   bucket was #F8D8D8 — white with a 32-point RGB spread. Low chroma survives
+   darkening badly, so multiplying it down turned the whole image GREY rather than
+   dark pink (measured H0 S18 at 0.5 brightness), and it needed saturation 1.85 plus
+   a channel mix to rescue the colour before the light came down. None of that is
+   needed here. If the background is ever swapped again, check the source's chroma
+   first — that, not its brightness, decides how much work the bake has to do.
 
    inset:-2% hides the blur bleeding at the edges.
 
@@ -175,7 +189,7 @@ body {
 .photo {
   position: absolute;
   inset: -2%;
-  background: url("assets/bg-baked.jpg") center 20% / cover no-repeat;
+  background: url("assets/bg-baked.jpg") center 42% / cover no-repeat;
   /* Baking the filter out costs this element the composited layer the filter was
      forcing for free, and without it a 1400x788 JPEG gets rescaled into the .bg
      stack every time the grain shifts. On the sibling site pinning the layer back
@@ -201,14 +215,14 @@ body {
   inset: 0;
   background:
     radial-gradient(ellipse 30rem 26rem at 50% 80%,
-      rgba(10, 6, 16, 0.70) 0%,
-      rgba(10, 6, 16, 0.42) 60%,
+      rgba(10, 6, 16, 0.62) 0%,
+      rgba(10, 6, 16, 0.36) 60%,
       rgba(10, 6, 16, 0) 100%),
     linear-gradient(to bottom,
-      rgba(10, 6, 16, 0.14) 0%,
-      rgba(10, 6, 16, 0.36) 30%,
-      rgba(10, 6, 16, 0.76) 64%,
-      rgba(10, 6, 16, 0.93) 100%);
+      rgba(10, 6, 16, 0.06) 0%,
+      rgba(10, 6, 16, 0.34) 32%,
+      rgba(10, 6, 16, 0.68) 66%,
+      rgba(10, 6, 16, 0.84) 100%);
 }
 
 .aurora {
@@ -278,7 +292,7 @@ body {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(125% 95% at 50% 50%, transparent 44%, rgba(8, 4, 14, 0.70) 100%),
+    radial-gradient(125% 95% at 50% 50%, transparent 48%, rgba(8, 4, 14, 0.60) 100%),
     repeating-linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0) 0px,
@@ -299,6 +313,19 @@ body {
   position: relative;
   z-index: 2;
   width: 100%;
+  /* min-width: 0 is load-bearing on a phone and its absence was a real bug.
+     This is a grid item, and a grid item's default `min-width: auto` means "never
+     narrower than your min-content". The player's min-content is set by the track
+     title, so on a 390px phone the card ignored its own `width: 100%` (350px) and
+     grew to 406px — the whole page then sat off-centre with the tile arrows clipped
+     off the right edge. It reads as a centring bug and is not one: the centring was
+     always correct, the card was simply wider than the space it was centred in.
+
+     Setting it to 0 lets the card stay at 350, which pushes the overflow down into
+     the player, where .player__meta (flex: 1, min-width: 0) absorbs it and the title
+     ellipsises as it was always meant to. The sibling sites never showed this because
+     "SoFaygo — 2 FAR" fits; "Lizzy McAlpine — the light in the painting" does not. */
+  min-width: 0;
   max-width: 27.5rem;
   display: flex;
   flex-direction: column;
@@ -587,7 +614,7 @@ body {
   place-items: center;
   /* lifted with the text: at 0.34 it read as a smudge beside a brighter handle,
      and it is an affordance rather than decoration (4.3:1) */
-  color: rgba(253, 250, 254, 0.54);
+  color: rgba(253, 250, 254, 0.62);
   transition: color 0.45s var(--ease), transform 0.45s var(--ease);
 }
 
@@ -683,7 +710,22 @@ body {
   color: var(--text-faint);
 }
 
+/* display: block is load-bearing, and its absence was a real bug on phones.
+   This is an <a>, so it defaults to display: inline — and `overflow: hidden` plus
+   `text-overflow: ellipsis` do NOTHING on an inline box. The nowrap title therefore
+   never truncated; instead it set the min-content width of its flex parent, which
+   pushed .player past the card's width, which pushed the grid past the viewport.
+   The visible symptom was the whole page sitting off-centre on a phone with the
+   tile arrows clipped off the right edge — it looked like a centring bug and was
+   actually this.
+
+   The sibling sites have the same markup and never showed it, because "SoFaygo —
+   2 FAR" is short enough to fit. "Lizzy McAlpine — the light in the painting" is
+   not. min-width: 0 belongs here too: a flex item will not shrink below its
+   min-content size without it, even once the ellipsis works. */
 .player__title {
+  display: block;
+  min-width: 0;
   font-size: 0.92rem;
   font-weight: 500;
   letter-spacing: -0.012em;
