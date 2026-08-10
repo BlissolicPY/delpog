@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>delpog</title>
+<meta name="description" content="All of delpog's links in one place.">
+<meta name="theme-color" content="#C88AE0">
+
+<link rel="canonical" href="https://delpog.xyz/">
+<!-- No og:url: crawlers fall back to whatever URL was actually requested, so link
+     previews stay correct on a preview host as well as on the live domain.
+     og:image must be absolute — crawlers do not resolve relative paths — and it
+     points at Linktree's CDN so it resolves from any host, including localhost.
+     Switch it to https://delpog.xyz/assets/pfp.png once the domain is live: that
+     URL is stable, whereas this one dies the day she changes her avatar.
+
+     Keep description, og:description and twitter:description IDENTICAL. They are
+     one string in three places, and letting the Google snippet drift from the
+     Discord embed is how they end up contradicting each other. Note also that the
+     preview says what the PAGE is — it is not her profile bio. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="delpog.xyz">
+<meta property="og:title" content="delpog">
+<meta property="og:description" content="All of delpog's links in one place.">
+<meta property="og:image" content="https://ugc.production.linktr.ee/a02a0d95-e463-40d9-bdc0-3261cc2c6bf6_7a056b71-beb6-4016-b287-6da71e624089-profile-image-300x300.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="delpog">
+<meta name="twitter:description" content="All of delpog's links in one place.">
+<meta name="twitter:image" content="https://ugc.production.linktr.ee/a02a0d95-e463-40d9-bdc0-3261cc2c6bf6_7a056b71-beb6-4016-b287-6da71e624089-profile-image-300x300.png">
+
+<link rel="icon" href="assets/pfp.png">
+<link rel="apple-touch-icon" href="assets/pfp.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://abacus.jasoncameron.dev" crossorigin>
+<link rel="preload" as="image" href="assets/pfp.png">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<!-- ?v= bumped whenever the stylesheet changes: browsers hold the old one
+     otherwise and a redesign silently does not appear -->
+<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="butterflies.css?v=1">
+
+<script>
+/* The intro gate lives here, inline and ahead of everything, for two reasons.
+
+   1. `gated` has to be on <html> before first paint, or the staggered reveal runs
+      behind the overlay and the page is sitting there already finished when the
+      visitor clicks through.
+   2. Dismissal must not depend on player.js, butterflies.js or the YouTube API. If
+      any of them is blocked by an extension, the intro still clears and the site
+      still works — it just does so in silence, with no butterflies. A gate that can
+      trap the page is a broken page.
+
+   The click here is also what makes the music legal to start: it is a real user
+   gesture, so no browser can refuse audible playback afterwards. */
+(function () {
+  var root = document.documentElement;
+  root.classList.add("gated");
+
+  var EVENTS = ["pointerdown", "touchstart", "keydown"];
+
+  function enter(e) {
+    /* A tap is not one event: it fires touchstart, and then — after the finger
+       lifts — the browser synthesises mousedown/mouseup/click from it. Dismissing
+       on the first of those meant the synthetic click arrived once the gate was
+       already going, so on a phone "click anywhere to enter" opened whichever link
+       happened to be under the finger. Swallow the touch's default action so no
+       compatibility click is generated, and see .gate.is-leaving in style.css for
+       the other half of the fix. */
+    if (e && e.cancelable &&
+        (e.type === "touchstart" || e.pointerType === "touch")) {
+      e.preventDefault();
+    }
+
+    EVENTS.forEach(function (t) { window.removeEventListener(t, enter, true); });
+    root.classList.remove("gated");
+
+    var gate = document.getElementById("gate");
+    if (gate) {
+      gate.classList.add("is-leaving");
+      setTimeout(function () { gate.hidden = true; }, 620);
+    }
+
+    /* A flag for anything that parsed late — a script loading after the visitor
+       has already clicked has no event to catch, and would otherwise never start. */
+    root.dataset.entered = "1";
+    window.__dpEntered = true;
+
+    /* Fired on BOTH targets on purpose. An event dispatched on `window` does not
+       reach a listener bound to `document` — window is not in document's
+       propagation path — and the three scripts that consume this were written
+       against different targets. Dispatching twice is free; a butterfly effect that
+       silently never runs is not. */
+    var ev = new CustomEvent("dp:enter");
+    window.dispatchEvent(ev);
+    document.dispatchEvent(new CustomEvent("dp:enter"));
+  }
+
+  /* passive: false because touchstart listeners on window are passive by default,
+     and a passive listener's preventDefault() is ignored */
+  EVENTS.forEach(function (t) {
+    window.addEventListener(t, enter, { capture: true, once: true, passive: false });
+  });
+})();
+</script>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="photo"></div>
+  <div class="aurora aurora--1"></div>
+  <div class="aurora aurora--2"></div>
+  <div class="scrim"></div>
+  <div class="grain"></div>
+  <!-- scanlines and vignette are one element: both are static, and the fewer
+       full-screen layers this stack has, the less it recomposites -->
+  <div class="scanlines"></div>
+</div>
+
+<main class="card">
+
+  <header class="hero">
+    <div class="avatar" data-reveal style="--i:0">
+      <span class="avatar__ring" aria-hidden="true"></span>
+      <span class="avatar__glow" aria-hidden="true"></span>
+      <img class="avatar__img" src="assets/pfp.png" width="132" height="132"
+           alt="delpog's profile picture" fetchpriority="high" draggable="false">
+    </div>
+
+    <h1 class="name" data-reveal style="--i:1">delpog</h1>
+    <p class="kana" data-reveal style="--i:2" lang="ja">デルポグ</p>
+
+    <!-- No bio line. Her Linktree bio is a list of @-mentions that resolve to
+         nothing on a static page, so putting it here would read as broken markup
+         rather than as a tagline. The .bio class is styled and waiting: drop a
+         <p class="bio" data-reveal style="--i:3"> in and nothing else changes. -->
+
+    <div class="stats" data-reveal style="--i:4">
+      <!-- The page's own hit counter, and the only number on the page. There are
+           no follower, subscriber or member counts anywhere here — she asked for
+           none, so main.js does not fetch any. -->
+      <span class="views" id="viewCount" data-state="loading" title="Page views">
+        <svg class="views__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1.8 12S5.4 5.4 12 5.4 22.2 12 22.2 12 18.6 18.6 12 18.6 1.8 12 1.8 12z"/>
+          <circle cx="12" cy="12" r="3.1"/>
+        </svg>
+        <span class="views__n" id="viewNum">&mdash;</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- Tile order is hers, taken off the Linktree as it stands: Twitch, TikTok,
+       Discord, Spotify. Not re-sorted by size. -->
+  <nav class="links" aria-label="delpog's links">
+
+    <a class="tile" data-reveal style="--i:5" data-brand="twitch"
+       href="https://www.twitch.tv/delpog" target="_blank" rel="noopener noreferrer">
+      <span class="tile__sheen" aria-hidden="true"></span>
+      <span class="tile__icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+      </span>
+      <span class="tile__text">
+        <span class="tile__title">Twitch</span>
+        <span class="tile__sub">twitch.tv/delpog</span>
+      </span>
+      <span class="tile__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <a class="tile" data-reveal style="--i:6" data-brand="tiktok"
+       href="https://www.tiktok.com/@delpoglive" target="_blank" rel="noopener noreferrer">
+      <span class="tile__sheen" aria-hidden="true"></span>
+      <span class="tile__icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+      </span>
+      <span class="tile__text">
+        <span class="tile__title">TikTok</span>
+        <span class="tile__sub">@delpoglive</span>
+      </span>
+      <span class="tile__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <!-- This invite is permanent: the Discord API reports expires_at: null for it,
+         which is the thing to check rather than whether the link merely 200s. A
+         30-day invite on a permanent page dead-ends a month after launch. -->
+    <a class="tile" data-reveal style="--i:7" data-brand="discord"
+       href="https://discord.gg/q8EFs6CN2w" target="_blank" rel="noopener noreferrer">
+      <span class="tile__sheen" aria-hidden="true"></span>
+      <span class="tile__icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+      </span>
+      <span class="tile__text">
+        <span class="tile__title">Discord</span>
+        <span class="tile__sub">delpog nation</span>
+      </span>
+      <span class="tile__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <a class="tile" data-reveal style="--i:8" data-brand="spotify"
+       href="https://open.spotify.com/user/2txaxzuc4hljq19gimeivexkh" target="_blank" rel="noopener noreferrer">
+      <span class="tile__sheen" aria-hidden="true"></span>
+      <span class="tile__icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.16-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+      </span>
+      <span class="tile__text">
+        <span class="tile__title">Spotify</span>
+        <span class="tile__sub">Playlists</span>
+      </span>
+      <span class="tile__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+  </nav>
+
+  <!-- Playback is the real YouTube IFrame player, hidden offscreen and driven by
+       the controls below. The track stays on YouTube — the upload keeps its play
+       count, and there is nothing hosted here to take down. This is the artist's
+       own VEVO upload rather than a lyric-video re-upload, which is the difference
+       between a track that disappears one day and one that does not. The card hides
+       itself if the API is blocked or the video stops being embeddable. -->
+  <section class="player" id="player" data-reveal style="--i:9"
+           data-playing="false" data-muted="false" aria-label="Now playing">
+
+    <div class="player__top">
+      <span class="player__art">
+        <img src="https://i.ytimg.com/vi/CEyHYCZAtOM/maxresdefault.jpg"
+             alt="" width="52" height="52" draggable="false">
+      </span>
+
+      <span class="player__meta">
+        <span class="player__label">
+          <span id="npLabel">Now playing</span>
+          <span class="player__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+        </span>
+        <!-- lowercase title is the artist's own styling, not a typo -->
+        <a class="player__title" href="https://youtu.be/CEyHYCZAtOM"
+           target="_blank" rel="noopener noreferrer">Lizzy McAlpine &mdash; the light in the painting</a>
+      </span>
+
+      <button class="player__btn" id="ppBtn" type="button" aria-label="Play">
+        <svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.4v13.2L19 12z"/></svg>
+        <svg class="ico-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3.1v14H8zM12.9 5H16v14h-3.1z"/></svg>
+      </button>
+    </div>
+
+    <div class="player__seekwrap" id="seek" role="slider" tabindex="0"
+         aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="player__track">
+        <div class="player__fill" id="fill"></div>
+        <span class="player__knob" id="knob" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <div class="player__foot">
+      <!-- --:-- until onReady: the real 3:53 comes from getDuration(), not from a
+           constant that could drift out of step with the video -->
+      <span class="player__time">
+        <span id="tCur">0:00</span><span class="player__sep">/</span><span id="tDur">--:--</span>
+      </span>
+
+      <span class="player__vol">
+        <button class="player__mute" id="muteBtn" type="button" aria-label="Mute">
+          <svg class="ico-vol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z"/><path d="M15.6 9.2a3.9 3.9 0 0 1 0 5.6"/><path d="M18 6.8a7.3 7.3 0 0 1 0 10.4"/></svg>
+          <svg class="ico-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z"/><path d="M16.2 9.8l4.6 4.6M20.8 9.8l-4.6 4.6"/></svg>
+        </button>
+        <!-- value and --vol both ship at 28 to match VOLUME_DEFAULT, so the slider
+             does not flash at a different position on first paint. 28 is a SLIDER
+             POSITION, not an amplitude — player.js raises it to VOLUME_CURVE. -->
+        <input class="player__slider" id="vol" type="range" min="0" max="100" value="28"
+               style="--vol:28" aria-label="Volume">
+      </span>
+    </div>
+  </section>
+
+  <footer class="foot" data-reveal style="--i:10">
+    <span>delpog.xyz</span>
+  </footer>
+
+</main>
+
+<!-- The intro. Shown to everyone: the click is what buys guaranteed audio, and it
+     doubles as the page's entrance. Dismissed by the inline script in <head>. -->
+<div class="gate" id="gate" role="button" tabindex="0" aria-label="Click anywhere to enter">
+  <div class="gate__inner">
+    <span class="gate__art">
+      <img src="assets/pfp.png" alt="" width="86" height="86" draggable="false">
+      <span class="gate__ring" aria-hidden="true"></span>
+    </span>
+    <span class="gate__eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+    <p class="gate__title">delpog</p>
+    <p class="gate__hint">Click anywhere to enter</p>
+  </div>
+</div>
+
+<div class="yt-host" id="ytHost" aria-hidden="true"></div>
+
+<!-- first, so the tier is on <html> before anything reads it -->
+<script src="quality.js?v=1"></script>
+<script src="main.js?v=1"></script>
+<script src="player.js?v=1"></script>
+<script src="cursor.js?v=1"></script>
+<script src="butterflies.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,1257 @@
+/* ==========================================================================
+   delpog
+
+   Palette sampled from her linktree/TikTok avatar (assets/pfp.png — a hamster in
+   headphones sitting in front of a pink-and-purple RGB battlestation) and from
+   the background photograph she chose (assets/bg.jpg — a hazy pink dawn over a
+   city skyline).
+
+   The interesting thing about this pair, and the reason the page works: the two
+   sources look like the same colour at a glance and are not. The avatar is
+   violet-dominant — 37.8% of its chromatic pixels are H240-269 indigo and 23.4%
+   are H270-299 purple, with only 8.0% in the magenta band. The photograph is the
+   mirror image: 75.9% H330-359 rose, 21.5% H300-329 magenta, and no indigo at
+   all. So they only overlap in H300-329, and everything on this page is built to
+   sit in or beside that overlap. That is where --orchid comes from, and it is
+   why an indigo accent and a rose accent can share a tile without arguing.
+   ========================================================================== */
+
+:root {
+  /* --- sampled from assets/pfp.png, over the inscribed circle. % is that
+         bucket's share of the circle at 4 bits per channel. --- */
+
+  /* The avatar does contain a genuine near-black — #080808 is its single most
+     common bucket at 2.33% (monitor bezel and desk shadow), so unlike the
+     MangoPlayz build the floor did not have to be invented. But a neutral black
+     floor under a violet page reads as a dead grey, so the floor is that bucket
+     pushed into the page's own hue family at the same lightness: H265, the mean
+     of the avatar's two dominant bands. Measured luma 6.2 against #080808's 8.0
+     — no darker, just no longer grey. */
+  --void-950:   #0A0610; /* derived from #080808 (2.33%, L3) */
+  --ink-900:    #120A1C; /* derived — one step up, for the gate and borders */
+  --plum-800:   #1C1029; /* derived — the deepest sampled plum, halved */
+
+  --plum-600:   #682868; /* 1.11% — H300 S44 L28, the overlap band itself */
+  --purple-600: #782888; /* 1.21% — H290 S55 L35 */
+  --purple-500: #783898; /* 2.22% — H280 S46 L41, the brightest common violet */
+  --electric:   #3808F8; /* 1.55% — H252 S94 L50, the RGB light strip. Almost
+                            unusable at full strength; it exists for one hairline
+                            in the avatar ring and nothing else. */
+  --steel-400:  #B8C8C8; /* 1.51% — H180 S13 L75, the monitor's cool glow. This
+                            is why a cyan TikTok tile is in-palette and not an
+                            import: 8.5% of the avatar is H180-209. */
+  --fur-300:    #C8C8C8; /* 1.13% — the hamster, in light */
+  --white:      #FDFAFE; /* derived from #F8F8F8 (1.05%), warmed to the page hue */
+
+  /* --- sampled from assets/bg.jpg the same way --- */
+  --rose-300:   #F8B8C8; /* 5.63% — H345 S82 L85 */
+  --rose-400:   #E898B8; /* 3.58% — H336 S63 L75 */
+  --rose-500:   #E888A8; /* 1.78% — H340 S68 L72 */
+  --mauve-700:  #985888; /* 1.72% — H315 S27 L47, a fog-shrouded tower */
+  --mauve-800:  #684868; /* 1.87% — H300 S18 L35, the darkest well-represented */
+
+  /* --- the three accents the whole page is tinted with. All three are DERIVED,
+         and that is deliberate: the raw buckets are either too dark to read
+         (#682868 at L28) or too saturated to look at (#3808F8 at S94). --- */
+
+  /* the bridge: the midpoint of the avatar's #783898 and the photo's #E898B8,
+     which lands in the H300-329 band both sources share. Every neutral accent on
+     the page is this colour. */
+  --orchid:     #C88AE0;
+  /* the photograph's rose band, averaged rather than taken from one bucket */
+  --rose:       #F5A8C4;
+  /* #3808F8 walked back to something a human can read text next to: same hue
+     family, saturation down from 94 to 84, lightness up from 50 to 65 */
+  --violet:     #8A5CF0;
+
+  --text:       var(--white);
+  --text-dim:   rgba(253, 250, 254, 0.58);
+  --text-faint: rgba(253, 250, 254, 0.34);
+  /* The sibling sites both landed on 0.72 for the small handle line under each
+     tile title, after the 0.34 they shipped with measured 2.88:1 against the
+     tile substrate — below the 4.5:1 WCAG AA floor for small text. Their two
+     backgrounds were a sunset and a night sky and they still converged, because
+     the substrate is white-over-dark in every case and it is the tile fill that
+     decides, not the photograph. This page starts from the same 0.72 for the
+     same reason. Re-measure against a screenshot if the background changes. */
+  --text-soft:  rgba(253, 250, 254, 0.72);
+
+  /* 0.05 / 0.10, matching MangoPlayz rather than the 0.035 / 0.08 the first two
+     sites used. The reasoning carries: a mid-luma background reads closer than
+     its luminance says, so the tiles need the lift to stay separate from it. */
+  --tile-bg:        rgba(255, 255, 255, 0.05);
+  --tile-bg-hover:  rgba(255, 255, 255, 0.085);
+  --tile-border:    rgba(255, 255, 255, 0.10);
+
+  /* per-tile brand accent, overridden by [data-brand] */
+  --brand: var(--orchid);
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: clamp(1.5rem, 5vw, 3rem) 1.25rem;
+  background: var(--void-950);
+  color: var(--text);
+  font-family: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--orchid); color: var(--void-950); }
+
+:focus-visible {
+  outline: 2px solid var(--orchid);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   Background — pink dawn over a skyline, drifting aurora, grain + scanlines
+   ========================================================================== */
+
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--void-950);
+}
+
+/* The photograph. Everything done to it is BAKED INTO assets/bg-baked.jpg
+   rather than applied as a CSS filter, because a filter on a full-screen layer
+   re-rasterises whenever anything above it recomposites and this stack
+   recomposites constantly. assets/bg.jpg is the untouched crop, kept to
+   re-derive from; nothing loads it.
+
+   What is baked in, and why it is not just the sibling site's recipe:
+
+   This source is pale — mean luma 177.9, and its dominant bucket is #F8D8D8,
+   which is white with a 32-point RGB spread. Multiplying that down the way
+   MangoPlayz darkened its sunset turns it GREY, not dark pink: at 0.5 brightness
+   the whole image measured H0 S18, and the dawn she picked it for was gone. Low
+   chroma survives darkening badly.
+
+   So the chroma goes up before the light comes down. In order:
+   `saturation=1.85, contrast=1.12` — the contrast is what keeps the skyline
+   reading as a silhouette instead of dissolving into the fog once it is dark;
+   `colorchannelmixer=rr=1.06:gg=0.86:bb=1.00`, which pushes the greys off neutral
+   without over-blueing them (an earlier pass used bb=1.14 and landed on H320
+   magenta — technically in the palette, but it threw away the pink the picture was
+   chosen for; this holds H330-340); then `brightness *0.60` and `gblur=sigma=1.6`.
+
+   Result: dominant #987888 at H330, mean luma 105.0. That is deliberately BRIGHTER
+   than the MangoPlayz photo's 73.8, and the reason is that this page's scrim is
+   much weaker than that one's. Judged as a pair, the composited page lands in the
+   same place; judged as a file, this one looks pale. Do not "fix" it to 73 without
+   also strengthening .scrim, or the dawn goes flat grey again.
+
+   inset:-2% hides the blur bleeding at the edges.
+
+   The sun's core lands slightly cool against all that plum. That is kept on
+   purpose: it puts a soft focal bloom directly behind the hero, which is the one
+   thing a top-weighted photograph needs in order to justify being there. */
+.photo {
+  position: absolute;
+  inset: -2%;
+  background: url("assets/bg-baked.jpg") center 20% / cover no-repeat;
+  /* Baking the filter out costs this element the composited layer the filter was
+     forcing for free, and without it a 1400x788 JPEG gets rescaled into the .bg
+     stack every time the grain shifts. On the sibling site pinning the layer back
+     was the single biggest measured win of its whole performance pass. */
+  will-change: transform;
+}
+
+/* Vertical, not centred, and sized in rem — inherited from MangoPlayz, where two
+   separate failures got it there. A centred ellipse sized in % covers the card on
+   a desktop and shrinks off it on a phone, where the card is 440px inside a 480px
+   window, and the tiles end up sitting on bare photograph. Darkening enough to
+   fix that then makes the image invisible at phone width, because any scrim wide
+   enough to cover a near-full-width card covers the whole screen.
+
+   So the photograph lives at the TOP, behind the hero, where the type is large
+   and gradient-filled and can survive a busy backdrop, and the page darkens into
+   the tile stack. The ellipse is sized in rem so it tracks the 27.5rem card at
+   every viewport instead of the window. The scrim colour is the page floor's own
+   hue rather than a neutral black — a black scrim over a plum photo greys it back
+   out, which is the same mistake as darkening the source too hard. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 30rem 26rem at 50% 80%,
+      rgba(10, 6, 16, 0.70) 0%,
+      rgba(10, 6, 16, 0.42) 60%,
+      rgba(10, 6, 16, 0) 100%),
+    linear-gradient(to bottom,
+      rgba(10, 6, 16, 0.14) 0%,
+      rgba(10, 6, 16, 0.36) 30%,
+      rgba(10, 6, 16, 0.76) 64%,
+      rgba(10, 6, 16, 0.93) 100%);
+}
+
+.aurora {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  will-change: transform;
+}
+
+/* The photograph is the ambient; these two exist only to keep some drift alive
+   behind a still image and to bleed its colours into the dark corners. One takes
+   the avatar's violet and one the photo's rose, so the pair spans the exact gap
+   the palette is built across. */
+.aurora--1 {
+  width: 58rem; height: 58rem;
+  top: -24rem; left: -16rem;
+  background: radial-gradient(circle, rgba(138, 92, 240, 0.20) 0%, transparent 68%);
+  animation: drift-1 26s var(--ease-soft) infinite alternate;
+}
+
+.aurora--2 {
+  width: 52rem; height: 52rem;
+  bottom: -22rem; right: -14rem;
+  background: radial-gradient(circle, rgba(232, 136, 168, 0.22) 0%, transparent 68%);
+  animation: drift-2 32s var(--ease-soft) infinite alternate;
+}
+
+/* Translate only — NO scale. Scaling a 90px-blurred element forces the blur to be
+   recomputed at the new size every frame, which is the entire cost of these two;
+   translating an already-rasterised layer is free. */
+@keyframes drift-1 {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(7rem, 5rem, 0); }
+}
+@keyframes drift-2 {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-6rem, -4.5rem, 0); }
+}
+
+/* inset -4%, not -50%. The shift only moves this 2%, so -4% is all the overhang
+   it ever needs, and every pixel here goes through mix-blend-mode: overlay. */
+.grain {
+  position: absolute;
+  inset: -4%;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 0.7s steps(1) infinite;
+}
+
+@keyframes grain-shift {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-2%, 1%); }
+  50%  { transform: translate(1%, -2%); }
+  75%  { transform: translate(-1%, -1%); }
+  100% { transform: translate(2%, 1%); }
+}
+
+/* Vignette and scanlines are two background layers on one element, not two
+   elements. Both are static, so merging them changes nothing visually and takes a
+   full-viewport layer out of a stack that recomposites together. The vignette is
+   listed first because the first background layer paints on top, which is the
+   order the two separate elements had. */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(125% 95% at 50% 50%, transparent 44%, rgba(8, 4, 14, 0.70) 100%),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.0225) 3px,
+      rgba(0, 0, 0, 0.0225) 4px
+    );
+}
+
+/* ==========================================================================
+   Card
+   ========================================================================== */
+
+/* position + z-index are load-bearing, not cosmetic: the butterfly drift layer
+   is z-index 1, so the card has to own a stacking position for the butterflies
+   to pass BEHIND it. See butterflies.css. */
+.card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 27.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* staggered entrance */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  filter: blur(6px);
+  animation: reveal 0.9s var(--ease) forwards;
+  animation-delay: calc(var(--i) * 70ms + 120ms);
+}
+
+@keyframes reveal {
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+
+.hero {
+  /* full width, not shrink-to-fit: otherwise the hero is only as wide as its
+     longest line and the stats row wraps */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2.25rem;
+}
+
+.avatar {
+  position: relative;
+  width: 8.25rem;
+  height: 8.25rem;
+  display: grid;
+  place-items: center;
+  margin-bottom: 1.35rem;
+}
+
+/* orchid, not the sampled --purple-500: this has to read as a halo against the
+   ambient directly behind it, and #783898 at L41 is barely brighter than the
+   photograph it sits on */
+.avatar__glow {
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 138, 224, 0.50) 0%, transparent 68%);
+  filter: blur(20px);
+  animation: breathe 5.5s var(--ease-soft) infinite alternate;
+}
+
+@keyframes breathe {
+  from { opacity: 0.55; transform: scale(0.94); }
+  to   { opacity: 1;    transform: scale(1.06); }
+}
+
+/* Thin conic ring, masked hollow. The sweep runs the palette's whole span in
+   order — indigo into violet into orchid into rose — which is the one place on
+   the page the raw #3808F8 earns its keep: at 2px wide, on a curve, for about 50
+   degrees, it reads as the RGB strip in her avatar rather than as a colour. */
+.avatar__ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--electric) 46deg,
+    var(--violet) 88deg,
+    var(--orchid) 148deg,
+    var(--rose) 205deg,
+    transparent 258deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  opacity: 0.9;
+  animation: spin 9s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(1turn); } }
+
+.avatar__img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(28, 16, 41, 0.9);
+  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.85);
+  transition: transform 0.5s var(--ease);
+  user-select: none;
+}
+
+.avatar:hover .avatar__img { transform: scale(1.04); }
+
+.name {
+  font-size: clamp(2.1rem, 8vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  background: linear-gradient(175deg, var(--white) 30%, var(--orchid) 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+.kana {
+  font-family: "Noto Sans JP", "Outfit", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  margin-top: 0.5rem;
+  color: var(--orchid);
+  opacity: 0.85;
+}
+
+/* Empty in the markup right now — she has no one-line bio that works out of
+   context. Kept styled so a line can be dropped in without touching CSS. */
+.bio {
+  margin-top: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--text-dim);
+}
+
+/* --- page views ---
+   No follower or subscriber counts anywhere on this page, at the owner's
+   request. This is the page's own hit counter, which is a different number about
+   a different thing, and it is the only reason .stats exists.
+
+   width: 100% is load-bearing even with one child — shrink-to-fit sized this box
+   to 242px on the sibling site while its contents needed 243, and the pill
+   wrapped to a second line over one pixel of rounding. */
+.stats {
+  width: 100%;
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Deliberately quiet: no border, no backdrop blur. It is a footnote that happens
+   to live up here next to the hero. */
+.views {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+  transition: background 0.4s var(--ease), color 0.4s var(--ease);
+}
+
+.views:hover {
+  background: rgba(200, 138, 224, 0.16);
+  color: var(--orchid);
+}
+
+.views__icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+  display: block;
+}
+
+.views__n {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.4s var(--ease);
+}
+
+.views[data-state="loading"] .views__n { opacity: 0.4; }
+
+/* both counter services down — take the whole pill away rather than leaving an
+   eye staring at an em dash */
+.views[data-state="dead"] { display: none; }
+
+/* ==========================================================================
+   Link tiles
+   ========================================================================== */
+
+/* Every one of these is the platform's own brand colour, unchanged. The sibling
+   sites re-tinted tiles only when two of them would otherwise have shared a
+   colour and the tile stopped saying which was which; that does not happen here,
+   because all four links are different platforms.
+
+   It is worth noting how well three of the four already sit in this palette:
+   Twitch's #9146FF is inside the avatar's dominant H240-299 band, Discord's
+   #5865F2 is next to the sampled #3808F8, and TikTok's cyan has the monitor glow
+   (8.5% of the avatar, H180-209) behind it. Spotify's green is the one genuine
+   outsider, and it stays green — it is the most recognisable thing about that
+   link, the glyph is doing the work, and one contrasting accent in four reads as
+   deliberate where a re-tint would read as a mistake. */
+.tile[data-brand="twitch"]  { --brand: #9146FF; }
+.tile[data-brand="tiktok"]  { --brand: #25F4EE; }
+.tile[data-brand="discord"] { --brand: #5865F2; }
+.tile[data-brand="spotify"] { --brand: #1ED760; }
+
+.tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: 1rem;
+  text-align: left;
+  text-decoration: none;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition:
+    transform 0.45s var(--ease),
+    background 0.45s var(--ease),
+    border-color 0.45s var(--ease),
+    box-shadow 0.45s var(--ease);
+}
+
+.tile:hover {
+  transform: translateY(-3px);
+  background: var(--tile-bg-hover);
+  border-color: color-mix(in srgb, var(--brand) 45%, transparent);
+  box-shadow:
+    0 14px 34px -14px color-mix(in srgb, var(--brand) 60%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--brand) 14%, transparent) inset;
+}
+
+.tile:active { transform: translateY(-1px) scale(0.99); }
+
+/* diagonal sheen sweeping across on hover */
+.tile__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--brand) 16%, transparent) 48%,
+    transparent 66%
+  );
+  transform: translateX(-120%);
+  transition: opacity 0.3s var(--ease);
+}
+
+.tile:hover .tile__sheen {
+  opacity: 1;
+  animation: sweep 0.95s var(--ease) forwards;
+}
+
+@keyframes sweep {
+  from { transform: translateX(-120%); }
+  to   { transform: translateX(120%); }
+}
+
+.tile__icon {
+  flex: none;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.45s var(--ease), border-color 0.45s var(--ease),
+              transform 0.45s var(--ease);
+}
+
+.tile__icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: var(--text-dim);
+  transition: fill 0.45s var(--ease), filter 0.45s var(--ease);
+}
+
+.tile:hover .tile__icon {
+  background: color-mix(in srgb, var(--brand) 16%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 34%, transparent);
+  transform: scale(1.06);
+}
+
+.tile:hover .tile__icon svg {
+  fill: var(--brand);
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--brand) 55%, transparent));
+}
+
+.tile__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.tile__title {
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.008em;
+}
+
+/* 0.83rem / weight 400 / +0.012em, not the 12.5px weight 300 the sibling sites
+   shipped with and had to fix. Weight 300 is spindly in Outfit at this size, and
+   small type wants a little positive tracking while the title above it still
+   tracks negative. */
+.tile__sub {
+  font-size: 0.83rem;
+  font-weight: 400;
+  letter-spacing: 0.012em;
+  color: var(--text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.45s var(--ease);
+}
+
+/* full white on hover — --text-dim would be a step DOWN from the base, i.e.
+   hovering would dim the line you are reading */
+.tile:hover .tile__sub { color: var(--text); }
+
+.tile__arrow {
+  flex: none;
+  display: grid;
+  place-items: center;
+  /* lifted with the text: at 0.34 it read as a smudge beside a brighter handle,
+     and it is an affordance rather than decoration (4.3:1) */
+  color: rgba(253, 250, 254, 0.54);
+  transition: color 0.45s var(--ease), transform 0.45s var(--ease);
+}
+
+.tile__arrow svg { width: 1rem; height: 1rem; display: block; }
+
+.tile:hover .tile__arrow {
+  color: var(--brand);
+  transform: translateX(3px);
+}
+
+/* ==========================================================================
+   Now playing — drives a hidden YouTube IFrame player
+   ========================================================================== */
+
+/* the real player: offscreen at full size rather than display:none or 0x0, which
+   some browsers treat as a reason not to start playback */
+.yt-host {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 320px;
+  height: 180px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.player {
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem 0.75rem;
+  border-radius: 1rem;
+  background: var(--tile-bg);
+  border: 1px solid var(--tile-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color 0.45s var(--ease), background 0.45s var(--ease);
+}
+
+.player:hover { border-color: rgba(200, 138, 224, 0.30); }
+
+/* set by player.js when the API is blocked or the video is not embeddable */
+.player[hidden] { display: none; }
+
+.player__top {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.player__art {
+  flex: none;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.7rem;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.9);
+}
+
+.player__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+  transition: transform 0.6s var(--ease), filter 0.6s var(--ease);
+  filter: saturate(0.9) brightness(0.92);
+}
+
+/* the art only comes fully alive while it is actually playing */
+.player[data-playing="true"] .player__art img {
+  transform: scale(1.06);
+  filter: saturate(1) brightness(1);
+}
+
+.player__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.player__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.player__title {
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.4s var(--ease);
+}
+
+.player__title:hover { color: var(--orchid); }
+
+/* three bars that only move while the track is running */
+.player__eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 0.55rem;
+}
+
+.player__eq i {
+  width: 2px;
+  height: 30%;
+  border-radius: 1px;
+  background: var(--orchid);
+  animation: eq 0.9s var(--ease-soft) infinite alternate;
+  opacity: 0.35;
+}
+
+.player__eq i:nth-child(2) { animation-delay: 0.28s; }
+.player__eq i:nth-child(3) { animation-delay: 0.55s; }
+
+.player[data-playing="true"] .player__eq i { opacity: 1; }
+.player[data-playing="false"] .player__eq i { animation-play-state: paused; }
+
+@keyframes eq {
+  from { height: 25%; }
+  to   { height: 100%; }
+}
+
+.player__btn {
+  flex: none;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--orchid);
+  background: rgba(200, 138, 224, 0.14);
+  border: 1px solid rgba(200, 138, 224, 0.32);
+  transition: background 0.4s var(--ease), border-color 0.4s var(--ease),
+              transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+}
+
+.player__btn:hover {
+  background: rgba(200, 138, 224, 0.24);
+  border-color: rgba(245, 168, 196, 0.55);
+  transform: scale(1.06);
+  box-shadow: 0 8px 22px -10px rgba(200, 138, 224, 0.8);
+}
+
+.player__btn:active { transform: scale(0.97); }
+
+.player__btn svg { width: 0.95rem; height: 0.95rem; fill: currentColor; display: block; }
+
+.player[data-playing="false"] .ico-pause,
+.player[data-playing="true"]  .ico-play { display: none; }
+
+/* --- seek --- */
+
+/* padded wrapper so the 4px bar has a comfortable grab area */
+.player__seekwrap {
+  margin-top: 0.7rem;
+  padding: 0.45rem 0;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.player__seekwrap:focus-visible { outline-offset: 6px; }
+
+.player__track {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  overflow: visible;
+}
+
+.player__fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--violet), var(--rose));
+  box-shadow: 0 0 12px -2px rgba(200, 138, 224, 0.65);
+}
+
+.player__knob {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow: 0 0 10px rgba(245, 168, 196, 0.75);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+
+.player:hover .player__knob,
+.player__seekwrap:focus-visible .player__knob { opacity: 1; }
+
+/* --- foot: time + volume --- */
+
+.player__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.player__time {
+  font-size: 0.7rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+.player__sep { margin: 0 0.3rem; opacity: 0.55; }
+
+.player__vol {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.player__mute {
+  display: grid;
+  place-items: center;
+  padding: 0.15rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--text-faint);
+  transition: color 0.4s var(--ease);
+}
+
+.player__mute:hover { color: var(--orchid); }
+.player__mute svg { width: 0.95rem; height: 0.95rem; display: block; }
+
+.player[data-muted="false"] .ico-muted,
+.player[data-muted="true"]  .ico-vol { display: none; }
+.player[data-muted="true"] .player__mute { color: var(--mauve-700); }
+
+.player__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 5.5rem;
+  height: 3px;
+  border-radius: 999px;
+  cursor: pointer;
+  /* --vol is kept in sync by player.js so the filled part tracks the thumb */
+  background: linear-gradient(
+    to right,
+    var(--orchid) calc(var(--vol, 28) * 1%),
+    rgba(255, 255, 255, 0.14) calc(var(--vol, 28) * 1%)
+  );
+}
+
+.player__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow: 0 0 0 3px rgba(200, 138, 224, 0.16);
+  transition: box-shadow 0.3s var(--ease);
+}
+
+.player__slider:hover::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(200, 138, 224, 0.22); }
+
+.player__slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rose);
+  box-shadow: 0 0 0 3px rgba(200, 138, 224, 0.16);
+}
+
+/* On anything wide enough the player leaves the column and parks in the top-left
+   corner of the viewport: it stops pushing the tiles past the fold, and a
+   persistent transport control belongs at a screen edge rather than buried under
+   the links. Below 64rem it drops back into the flow, because a fixed panel would
+   cover the hero on a phone.
+
+   This block has to sit AFTER the base .player rule. Same specificity means
+   source order decides, and in front of it the base width: 100% wins and the
+   panel spans the whole viewport. */
+@media (min-width: 64rem) {
+  .player {
+    position: fixed;
+    top: 1.15rem;
+    left: 1.15rem;
+    z-index: 20;
+    width: 19.5rem;
+    margin-top: 0;
+  }
+}
+
+/* ==========================================================================
+   Intro gate — the one click browsers insist on, turned into the entrance.
+
+   Everyone gets it, because that click is the only thing that guarantees audible
+   playback: after a real gesture no browser can refuse. It also holds the
+   staggered reveal below, so the page plays its entrance AS the overlay dissolves
+   rather than having quietly finished behind it.
+   ========================================================================== */
+
+/* the reveal is paused, not delayed — pausing stops the delay clock too, so
+   removing .gated replays the whole stagger from the top */
+html.gated [data-reveal] { animation-play-state: paused; }
+html.gated body { overflow: hidden; }
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background:
+    radial-gradient(70% 55% at 50% 45%, rgba(138, 92, 240, 0.22) 0%, transparent 70%),
+    rgba(10, 6, 16, 0.84);
+  backdrop-filter: blur(14px) saturate(0.9);
+  -webkit-backdrop-filter: blur(14px) saturate(0.9);
+  animation: gate-in 0.55s var(--ease) both;
+}
+
+.gate[hidden] { display: none; }
+
+/* It deliberately KEEPS pointer-events while leaving. With pointer-events: none
+   here, a tap on a phone opened a random link: touchstart dismisses the gate, the
+   gate stops hit-testing, and the browser then synthesises the click from that
+   same tap onto whichever tile was under the finger. Staying hit-testable for the
+   0.6s fade means that phantom click lands on the gate and does nothing. This bug
+   shipped on two sibling sites before it was found, because desktop cannot
+   reproduce it. */
+.gate.is-leaving {
+  animation: gate-out 0.6s var(--ease) forwards;
+}
+
+@keyframes gate-in {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to   { opacity: 1; }
+}
+
+@keyframes gate-out {
+  to { opacity: 0; transform: scale(1.02); }
+}
+
+.gate__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 1.5rem;
+  animation: gate-rise 0.7s var(--ease) 0.08s both;
+}
+
+@keyframes gate-rise {
+  from { opacity: 0; transform: translateY(12px); filter: blur(5px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+.gate__art {
+  position: relative;
+  width: 5.4rem;
+  height: 5.4rem;
+  display: grid;
+  place-items: center;
+}
+
+.gate__art img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(18, 10, 28, 0.9);
+  box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.9);
+  user-select: none;
+}
+
+/* one slow pulse ring — reads as "waiting for you" without being a button */
+.gate__ring {
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 138, 224, 0.55);
+  animation: gate-pulse 2.6s var(--ease-soft) infinite;
+}
+
+@keyframes gate-pulse {
+  0%   { transform: scale(0.96); opacity: 0.9; }
+  70%  { transform: scale(1.22); opacity: 0; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+
+.gate__eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 0.85rem;
+  margin-top: 1.15rem;
+}
+
+.gate__eq i {
+  width: 2px;
+  height: 30%;
+  border-radius: 1px;
+  background: var(--orchid);
+  animation: eq 0.85s var(--ease-soft) infinite alternate;
+}
+
+.gate__eq i:nth-child(2) { animation-delay: 0.16s; }
+.gate__eq i:nth-child(3) { animation-delay: 0.33s; }
+.gate__eq i:nth-child(4) { animation-delay: 0.5s; }
+.gate__eq i:nth-child(5) { animation-delay: 0.67s; }
+
+.gate__title {
+  margin-top: 0.8rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  background: linear-gradient(175deg, var(--white) 30%, var(--orchid) 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+
+.gate__hint {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  animation: gate-breathe 2.8s var(--ease-soft) infinite alternate;
+}
+
+@keyframes gate-breathe {
+  from { opacity: 0.45; }
+  to   { opacity: 0.95; }
+}
+
+/* ==========================================================================
+   Cursor trail — a lagging, speed-stretched glow behind the real pointer.
+   The native cursor stays visible on purpose; see cursor.js.
+   ========================================================================== */
+
+/* Two things made this the most expensive 26px on the sibling page, and neither
+   is here:
+
+   mix-blend-mode: screen forced everything under the glow to recomposite on
+   every pointermove, and over a dark backdrop it bought almost nothing — screen
+   against black is the source colour, which is what normal compositing gives
+   too; they only diverge over lit pixels.
+
+   filter: blur(6px) re-rasterised every frame, because the glow is scaled per
+   frame by the speed stretch and a scaled filter cannot be reused. A radial
+   gradient with soft stops IS a blur, so the spread lives in the gradient and the
+   box is big enough to cover what the blur used to add. */
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  pointer-events: none;   /* must never eat a click */
+  opacity: 0;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    rgba(245, 168, 196, 0.44) 0%,
+    rgba(200, 138, 224, 0.28) 26%,
+    rgba(138, 92, 240, 0.12) 48%,
+    rgba(138, 92, 240, 0) 72%
+  );
+}
+
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .cursor-glow { display: none; }
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.foot {
+  margin-top: 2rem;
+  font-size: 0.72rem;
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ==========================================================================
+   Fitting on one screen — the page is meant to be read without scrolling.
+   Everything here is spacing only; nothing changes size or colour.
+   ========================================================================== */
+
+@media (min-width: 64rem) and (max-height: 60rem) {
+  body { padding: 1.25rem; }
+  .hero { margin-bottom: 1.5rem; }
+  .avatar { width: 7rem; height: 7rem; margin-bottom: 1rem; }
+  .name { font-size: clamp(1.9rem, 6vw, 2.25rem); }
+  .bio { margin-top: 0.6rem; }
+  /* .stats, not its child — a margin on the pill knocks it out of the row */
+  .stats { margin-top: 1.1rem; }
+  .links { gap: 0.55rem; }
+  .tile { padding: 0.8rem 1.05rem; }
+  .foot { margin-top: 1.2rem; }
+}
+
+/* very short windows — laptop screens with the browser chrome eating 150px */
+@media (min-width: 64rem) and (max-height: 46rem) {
+  body { padding: 0.9rem; }
+  .hero { margin-bottom: 1.1rem; }
+  .avatar { width: 5.6rem; height: 5.6rem; margin-bottom: 0.7rem; }
+  .kana { margin-top: 0.35rem; }
+  .bio { margin-top: 0.45rem; font-size: 0.88rem; }
+  .stats { margin-top: 0.8rem; }
+  .links { gap: 0.45rem; }
+  .tile { padding: 0.65rem 1rem; border-radius: 0.85rem; }
+  .tile__icon { width: 2.1rem; height: 2.1rem; }
+  .foot { margin-top: 0.9rem; }
+}
+
+/* ==========================================================================
+   Link stack
+   ========================================================================== */
+
+.links {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* ==========================================================================
+   Small screens
+   ========================================================================== */
+
+@media (max-width: 26rem) {
+  .avatar { width: 7.25rem; height: 7.25rem; }
+  .tile { padding: 0.85rem 0.95rem; gap: 0.8rem; }
+  /* 0.74rem would be 11.8px — under the ~12px floor where small type stops
+     being comfortable. Still shrinks, just not that far. */
+  .tile__title { font-size: 0.98rem; }
+  .tile__sub { font-size: 0.8rem; }
+}
+
+/* ==========================================================================
+   Adaptive quality — see quality.js, which sets data-q on <html> from measured
+   frame times. The page keeps its shape at every tier; what it sheds is the work
+   that costs the most per frame and shows the least.
+   ========================================================================== */
+
+/* mid: the full-screen blend goes and the glass gets thinner. Everything still
+   moves, so it still reads as the same page. */
+[data-q="mid"] .grain { display: none; }
+
+[data-q="mid"] .tile,
+[data-q="mid"] .player {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* low: nothing that costs per-frame work survives. The auroras hold position
+   instead of drifting, the backdrop blur goes (it re-blurs whenever anything
+   moves behind it), and the cursor trail is gone — cursor.js parks its loop when
+   it sees this tier, so the element is not merely hidden.
+
+   The scanlines stay: they are static, and once the grain is gone and the auroras
+   are still, the whole .bg stack composites once and is reused. Hiding them would
+   also take the vignette, since the two are one element. */
+[data-q="low"] .grain,
+[data-q="low"] .cursor-glow { display: none; }
+
+[data-q="low"] .aurora { animation: none; }
+
+[data-q="low"] .tile,
+[data-q="low"] .player,
+[data-q="low"] .gate {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* the glass carried some of the tile's separation from the photograph, so give it
+   back as opacity rather than leaving the tiles floating */
+[data-q="low"] {
+  --tile-bg: rgba(255, 255, 255, 0.075);
+  --tile-bg-hover: rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   Reduced motion — keep the design, drop the movement
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  [data-reveal] { opacity: 1; transform: none; filter: none; }
+  .grain { animation: none; }
+  .avatar__ring { animation: none; }
+}
