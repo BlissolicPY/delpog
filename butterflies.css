@@ -215,11 +215,22 @@
   /* no emergence at all — a burst is the one thing here with no calm version */
   .bf { display: none; }
 
-  /* the drift survives as a near-static handful: no flapping, no weaving, and a
-     rise slow enough to be imperceptible. The opening batch is already scattered
-     up the screen by --y0, so the page is populated rather than empty, and the
-     alive cap stops anything accumulating behind it. */
-  .bf-drift { animation-duration: 240s; }
+  /* The drift survives as a genuinely static handful: no rise, no weave, no
+     flap. Freezing it where --y0 would have put it is what makes it a handful
+     rather than a stack — the opening batch is already scattered up the page.
+
+     Merely SLOWING the rise was the wrong answer and was tried first: the
+     fade-in is a percentage of the duration, so a 240s crossing stretches a
+     1.5s fade into 29s and the whole handful sits at 0.02 opacity for half a
+     minute. Stopping the animation outright also means animationend never
+     fires, so butterflies.js never recycles these and the alive cap holds the
+     population steady at the tier's handful, which is exactly what is wanted. */
+  .bf-drift {
+    animation: none;
+    transform: translate3d(var(--drift), calc(var(--y0, 0vh) * -1), 0);
+    opacity: var(--op);
+    will-change: auto;
+  }
 
   .bf__wander,
   .bf__wing { animation: none; }

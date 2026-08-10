@@ -202,18 +202,24 @@
          butterfly also gets a guaranteed sideways component and a guaranteed
          upward one, so even the ones leaving straight up still arc, and the
          near-horizontal ones at the edges of the fan still rise. */
+      /* Horizontal travel is measured in vw and vertical in vh, deliberately
+         NOT vmax for both. vmax sizes the lateral sweep against the LONGER edge,
+         so on a portrait phone every butterfly crossed about 2.4 viewport widths
+         and the entire burst had left the screen inside half a second. Splitting
+         the units costs a little angular fidelity on extreme aspect ratios and
+         buys identical framing on all of them. */
       const deg = (((i + Math.random()) / n) * 2 - 1) * SPREAD;
-      const dist = rand(70, 112);
+      const rad = (deg * Math.PI) / 180;
       const side = deg === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(deg);
-      const dx = Math.sin((deg * Math.PI) / 180) * dist + side * rand(6, 18);
-      const dy = -Math.cos((deg * Math.PI) / 180) * dist - rand(4, 14);
+      const dx = Math.sin(rad) * rand(62, 95) + side * rand(5, 14);
+      const dy = -Math.cos(rad) * rand(62, 96) - rand(4, 12);
 
       const s = bf.style;
       s.setProperty("--x", `${(box.left + rand(0.12, 0.88) * box.width).toFixed(0)}px`);
       s.setProperty("--y", `${(box.top + rand(0.04, 0.62) * box.height).toFixed(0)}px`);
       s.setProperty("--size", `${size.toFixed(0)}px`);
-      s.setProperty("--dx", `${dx.toFixed(1)}vmax`);
-      s.setProperty("--dy", `${dy.toFixed(1)}vmax`);
+      s.setProperty("--dx", `${dx.toFixed(1)}vw`);
+      s.setProperty("--dy", `${dy.toFixed(1)}vh`);
       // near butterflies cover ground fast, distant ones lag — parallax, so the
       // depth reads without any perspective
       s.setProperty("--dur", `${(rand(1.6, 2.2) + far * 1.3).toFixed(2)}s`);
@@ -296,7 +302,7 @@
        starting near the top would crawl upwards while sliding sideways at
        everybody else's speed. A small positive delay staggers the batch so the
        fade-ins don't stack. */
-    const y0 = initial ? rand(0, 102) : 0;
+    const y0 = initial ? rand(4, 100) : 0;
     const togo = (128 - y0) / 128;
 
     const s = bf.style;
@@ -392,13 +398,20 @@
   window.addEventListener("dp:enter", start, { once: true });
 
   /* And the late case: if the gate already cleared before this file parsed,
-     `dp:enter` is gone and the listeners above would wait forever. The gate
-     marks <html class="gated"> before first paint and removes it on dismissal,
-     so no `gated` and no gate element still standing means we missed it — which
-     is also true of a page carrying no gate at all, where the entrance should
-     simply play on load. */
+     `dp:enter` is gone and the listeners above would wait forever.
+
+     The gate leaves two flags behind for exactly this — `html[data-entered="1"]`
+     and `window.__dpEntered` — and either of them is proof on its own. The rest
+     is the fallback for a page whose gate has been rewritten without them: the
+     gate marks <html class="gated"> before first paint and removes it on
+     dismissal, so no `gated` and no gate element still standing means we missed
+     it, which is also true of a page carrying no gate at all, where the entrance
+     should simply play on load. Checking for a standing gate element is what
+     stops a renamed marker class from firing the burst behind the overlay. */
   function alreadyIn() {
-    if (document.documentElement.classList.contains("gated")) return false;
+    const root = document.documentElement;
+    if (root.dataset.entered === "1" || window.__dpEntered) return true;
+    if (root.classList.contains("gated")) return false;
     const gate = document.getElementById("gate") || document.querySelector(".gate");
     return !gate || gate.hidden || gate.classList.contains("is-leaving");
   }
