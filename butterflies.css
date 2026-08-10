@@ -1,0 +1,226 @@
+/* ==========================================================================
+   delpog — butterflies. Two effects, one layer. See butterflies.js.
+
+   Everything animated in this file is transform or opacity, so all of it stays
+   on the compositor. There is no animated filter, no animated width/height,
+   no animated top/left, no animated box-shadow. The only filter here is static
+   and it sits on the one depth band whose wings hold a fixed pose — a filter
+   with an animating subtree is re-rasterised every frame, which is what made
+   the sibling site's bats the most expensive thing on that page.
+
+   PRECONDITION, owned by style.css and not restated here: `.card` must be
+   `position: relative; z-index: 2`. The layer below is z-index 1, so the
+   butterflies pass BEHIND the tiles. That is load-bearing twice over — nothing
+   ever crosses the text, and because the tiles use backdrop-filter, a butterfly
+   passing behind one shows through the glass as a soft blurred shape.
+   ========================================================================== */
+
+.flutter {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Shared: the middle element (sway / bob / bank) and the inner svg (wing flap)
+   -------------------------------------------------------------------------- */
+
+/* The wander is a shallow arc, not a straight diagonal: the mid keyframe pulls
+   the path up while the ends drop, so alternating between them traces a curve
+   in both directions. It carries the bank too, because a butterfly rolls into
+   the direction it is weaving — one animation, one composited transform. */
+.bf__wander {
+  display: block;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  animation: bf-wander var(--wanderDur, 1s) ease-in-out infinite alternate;
+}
+
+@keyframes bf-wander {
+  from {
+    transform: translate3d(calc(var(--sway) * -1), calc(var(--bob) * 0.5), 0)
+               rotate(calc(var(--bank) * -1));
+  }
+  50% {
+    transform: translate3d(0, calc(var(--bob) * -1), 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(var(--sway), calc(var(--bob) * 0.5), 0)
+               rotate(var(--bank));
+  }
+}
+
+.bf__art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The flap.
+
+   transform-box: view-box puts transform-origin: 50% 50% at (50, 50) of the
+   0 0 100 100 viewBox — which is the body's centre line, by construction. So a
+   scaleX about it compresses the wings towards the body exactly as a real wing
+   foreshortens, and --sx: -1 on the second group mirrors the same path data to
+   the other side for free. The two multiply, which is why the keyframes carry
+   `calc(var(--sx) * k)` rather than a bare scale: the left group's flap has to
+   stay negative through the whole cycle or it would flip through the body.
+
+   Node count is why this is a transform on two <g> elements and not an animated
+   `d` attribute: animating path data re-tessellates on the main thread every
+   frame, and that is the other half of the sibling site's bat problem. */
+.bf__wing {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  /* the resting pose, and what the distant band keeps instead of a flap */
+  transform: scaleX(calc(var(--sx) * var(--pose, 1)));
+  animation: bf-flap var(--flap, 150ms) ease-in-out var(--flapPhase, 0ms)
+             infinite alternate;
+}
+
+/* --flap is a half-stroke: `alternate` means the full up-and-down cycle is
+   twice it, so 110–190ms lands the wingbeat at roughly 2.6–4.5 Hz. --flapPhase
+   is a NEGATIVE delay, which is correct here and nowhere else in this file: it
+   desynchronises an infinite loop that has no fade-in to skip. */
+@keyframes bf-flap {
+  from { transform: scaleX(var(--sx)); }
+  to   { transform: scaleX(calc(var(--sx) * var(--flapMin, 0.34))); }
+}
+
+/* --------------------------------------------------------------------------
+   Effect 1 — the emergence: a burst out from behind the card as the gate clears
+   -------------------------------------------------------------------------- */
+
+/* --x / --y are the butterfly's centre, in viewport pixels, so the box is
+   offset by half its size rather than translated — a static offset, because the
+   transform channel belongs to the travel animation. */
+.bf {
+  position: absolute;
+  left: calc(var(--x) - var(--size) / 2);
+  top: calc(var(--y) - var(--size) / 2);
+  width: var(--size);
+  height: var(--size);
+  will-change: transform, opacity;
+  /* linear on purpose, and the deceleration is in the keyframe offsets instead
+     — see below */
+  animation: bf-emerge var(--dur) linear var(--delay) both;
+}
+
+/* The distant band, and the only filter in the file. Static blur, static
+   darkening (the depth tone is a dimmed palette tint, not a fourth colour), and
+   `animation: none` on the wings below so nothing inside the filter ever moves.
+   Travel, wander and fade are all still animated — they are transform and
+   opacity on and above the filtered element, which composites the cached raster
+   rather than recomputing it. That is the ancestor's rule exactly: rotating an
+   already-rasterised filtered element is fine; re-rasterising one is not. */
+.bf--soft .bf__art {
+  filter: blur(var(--blur)) brightness(var(--dim));
+  will-change: transform;
+}
+
+.bf--soft .bf__wing {
+  animation: none;
+}
+
+/* A leaf gust is wind, so the ancestor swept it across LINEARLY. A butterfly is
+   self-propelled and slows as it climbs, so this path decelerates — but the
+   deceleration lives in the keyframe offsets, not in an easing function, because
+   animation-timing-function applies BETWEEN EVERY PAIR of keyframes and an
+   ease-out on a four-segment path stutters four times.
+
+   The lateral fraction also runs ahead of the vertical one, so each butterfly
+   scatters outward first and then straightens up: a real arc out of the card
+   rather than a radial line. Per-property interpolation is what lets the opacity
+   ramp sit on its own offsets in the same rule. */
+@keyframes bf-emerge {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  7% { opacity: var(--op); }
+  20% {
+    transform: translate3d(calc(var(--dx) * 0.46), calc(var(--dy) * 0.3), 0);
+  }
+  45% {
+    transform: translate3d(calc(var(--dx) * 0.74), calc(var(--dy) * 0.58), 0);
+  }
+  72% {
+    transform: translate3d(calc(var(--dx) * 0.91), calc(var(--dy) * 0.83), 0);
+  }
+  78% { opacity: var(--op); }
+  100% {
+    transform: translate3d(var(--dx), var(--dy), 0);
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Effect 2 — the ambient drift: sparse, calm, forever
+   -------------------------------------------------------------------------- */
+
+.bf-drift {
+  position: absolute;
+  left: calc(var(--x) - var(--size) / 2);
+  top: calc(106vh - var(--size) / 2);
+  width: var(--size);
+  height: var(--size);
+  will-change: transform, opacity;
+  animation: bf-rise var(--dur) linear var(--delay) both;
+}
+
+/* --y0 lets a butterfly begin part-way up the screen while still playing its
+   animation from 0%, so it fades in wherever it starts. A negative
+   animation-delay is the wrong tool for that and has already been the wrong
+   tool once on the sibling site: it drops each one into the middle of its
+   timeline, past the fade-in, and the whole opening batch materialises at full
+   opacity at the same instant. butterflies.js scales both the duration and the
+   lateral travel by the distance still to go, so a butterfly starting high does
+   not crawl. The ramp is slow at both ends deliberately — these should drift
+   into existence, not switch on. */
+@keyframes bf-rise {
+  from {
+    transform: translate3d(0, calc(var(--y0, 0vh) * -1), 0);
+    opacity: 0;
+  }
+  12% { opacity: var(--op); }
+  84% { opacity: var(--op); }
+  to {
+    transform: translate3d(var(--drift), -128vh, 0);
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Adaptive quality — quality.js owns data-q on <html>; this only reacts to it.
+   Counts are butterflies.js's business; the one thing worth doing here is that
+   at the bottom rung nothing animates inside anything, so the fourteen
+   butterflies left are pure compositor work.
+   -------------------------------------------------------------------------- */
+
+[data-q="low"] .bf__wing {
+  animation: none;
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion. LAST IN THE FILE ON PURPOSE: the overrides below are
+   longhands against the shorthands above at equal specificity, so source order
+   is what decides them. (The same trap cost the sibling site a whole debugging
+   session over a `.player` media query sitting in front of its base rule.)
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* no emergence at all — a burst is the one thing here with no calm version */
+  .bf { display: none; }
+
+  /* the drift survives as a near-static handful: no flapping, no weaving, and a
+     rise slow enough to be imperceptible. The opening batch is already scattered
+     up the screen by --y0, so the page is populated rather than empty, and the
+     alive cap stops anything accumulating behind it. */
+  .bf-drift { animation-duration: 240s; }
+
+  .bf__wander,
+  .bf__wing { animation: none; }
+}
