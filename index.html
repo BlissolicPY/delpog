@@ -11,10 +11,10 @@
 <link rel="canonical" href="https://delpog.xyz/">
 <!-- No og:url: crawlers fall back to whatever URL was actually requested, so link
      previews stay correct on a preview host as well as on the live domain.
-     og:image must be absolute — crawlers do not resolve relative paths — and it
-     points at Linktree's CDN so it resolves from any host, including localhost.
-     Switch it to https://delpog.xyz/assets/pfp.png once the domain is live: that
-     URL is stable, whereas this one dies the day she changes her avatar.
+     og:image must be absolute — crawlers do not resolve relative paths — so it
+     names the apex rather than a relative path. It pointed at Linktree's CDN copy
+     of her avatar until the domain went live; that URL dies the day she changes
+     her avatar, and a file in this repo does not.
 
      Keep description, og:description and twitter:description IDENTICAL. They are
      one string in three places, and letting the Google snippet drift from the
@@ -24,11 +24,11 @@
 <meta property="og:site_name" content="delpog.xyz">
 <meta property="og:title" content="delpog">
 <meta property="og:description" content="All of delpog's links in one place.">
-<meta property="og:image" content="https://ugc.production.linktr.ee/a02a0d95-e463-40d9-bdc0-3261cc2c6bf6_7a056b71-beb6-4016-b287-6da71e624089-profile-image-300x300.png">
+<meta property="og:image" content="https://delpog.xyz/assets/pfp.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="delpog">
 <meta name="twitter:description" content="All of delpog's links in one place.">
-<meta name="twitter:image" content="https://ugc.production.linktr.ee/a02a0d95-e463-40d9-bdc0-3261cc2c6bf6_7a056b71-beb6-4016-b287-6da71e624089-profile-image-300x300.png">
+<meta name="twitter:image" content="https://delpog.xyz/assets/pfp.png">
 
 <link rel="icon" href="assets/pfp.png">
 <link rel="apple-touch-icon" href="assets/pfp.png">

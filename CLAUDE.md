@@ -222,10 +222,8 @@ in a real browser.
 - `style.css` — palette custom properties and everything else.
   **Bump `style.css?v=N` in index.html on every change**, or browsers serve the old
   stylesheet and the change silently does not appear.
-- `butterflies.css` / `butterflies.js` — the entrance burst and the ambient drift. Its
-  layer is `.flutter` at z-index 1 against the card's 2, so butterflies pass **behind** the
-  tiles; because the tiles use `backdrop-filter`, one passing behind a tile shows through
-  the glass as a soft blurred shape. That only happens because it is underneath.
+- `butterflies.css` / `butterflies.js` — the entrance burst and the ambient drift. See
+  "The butterflies" below.
 - `main.js` — the page-view counter, and nothing else.
 - `player.js` — the hidden YouTube IFrame player and the "now playing" card.
 - `cursor.js` — the speed-stretched cursor glow. It resolves `--rose`, `--orchid` and
@@ -238,6 +236,49 @@ in a real browser.
   `assets/bg.jpg` is the source; nothing loads it.
 - `CNAME` — the custom domain. Must agree with `canonical` and `og:site_name` in
   `index.html`, or link previews point at the wrong place.
+
+## The butterflies
+Two separate effects, both hooked to `dp:enter` and **never** to a click handler of their
+own — the gate has to stay independent of whether this file loaded at all.
+
+- **The emergence**: 48 butterflies (48 / 28 / 14 by tier) bursting up and outward from
+  behind the card. Decomposed across **three nested elements**, as the sibling leaf gust is,
+  because one keyframe cannot carry travel, wander and wing-flap at once: the outer element
+  travels (`bf-emerge`), the middle wanders and banks (`bf-wander`), the inner SVG flaps
+  (`bf-flap`). Sizes come from three depth bands (roughly 14% foreground 90–150px, 41% mid,
+  the rest 18–40px) and duration, opacity, blur and sway are all derived from that one size
+  draw, so near butterflies travel fast and sharp while distant ones lag and soften.
+  Duration is `1.6–2.2s + far*1.3`, i.e. the whole burst is over by ~3.5s.
+- **The drift**: a sparse ambient population, **capped at 7 alive**, rising slowly forever.
+  Its opening batch starts mid-flight via a **`--y0` starting-offset custom property, not a
+  negative `animation-delay`** — a negative delay skips the fade-in and materialises the
+  whole batch at once at full opacity, which is a mistake already made once on the Senkhi
+  build. `low` tier gets no drift at all, matching how MangoPlayz sheds its leaf fall.
+- **Nothing animates inside a filter.** Wings flap by `scaleX` about the body's centre line
+  rather than by animating SVG path `d`, and the one depth band that carries a static
+  `blur()` holds a **fixed wing pose** so nothing inside the filter ever moves. This is the
+  Blissolic bat lesson: those animated wing paths inside a `blur() + drop-shadow()` filter
+  re-rasterised every frame and were that page's single biggest cost. Rotating or translating
+  an already-rasterised filtered layer is compositor work and is fine.
+- **`.flutter` is z-index 1 against the card's 2**, and `.card` carries
+  `position: relative` to make that work. Two payoffs: nothing ever crosses the text, and
+  because the tiles use `backdrop-filter`, a butterfly passing behind one shows through the
+  glass as a soft blurred shape. That only happens because it is underneath.
+
+**Testing gotcha: headless Chrome measures as `low`.** `quality.js` samples real frame
+times, and a headless renderer is slow enough that the tier drops to `low` within seconds —
+where the drift population is 0 by design. A headless run therefore shows an empty
+`.flutter` layer and looks broken when it is working correctly. **Pin the tier with
+`?q=high`.** Measured population over time on a real driven page, high tier:
+
+```
+0.35s=48   0.75s=48   1.5s=48   2.5s=50   4.0s=7   6.5s=7   9.0s=7
+```
+
+i.e. the burst holds 48 through its run, briefly overlaps the first drift spawns, then
+settles to the 7-alive ambient cap. Peak visual moment is ~0.35s, and a still taken at
+1.2s+ shows them already near the viewport edges — do not judge the effect from a late
+frame.
 
 ## Decisions & Rationale
 
@@ -254,11 +295,12 @@ in a real browser.
   explicitly asked for on the MangoPlayz build after the embed read as two sentences with the
   actual purpose buried at the end.
 
-- **`og:image` points at Linktree's CDN, not at the repo.** It has to be absolute — crawlers
-  do not resolve relative paths — and a CDN URL resolves from any host including localhost,
-  which is why the siblings do the same. **Switch it to `https://delpog.xyz/assets/pfp.png`
-  once the domain is live**: that URL is stable, whereas the Linktree one dies the day she
-  changes her avatar.
+- **`og:image` names the apex, `https://delpog.xyz/assets/pfp.png`.** It has to be absolute —
+  crawlers do not resolve relative paths. It pointed at Linktree's CDN copy of her avatar
+  while the domain was still propagating, which is what the siblings do; it was switched to
+  the apex the moment DNS resolved, because the Linktree URL dies the day she changes her
+  avatar and a file in the repo does not. The trade is that this now depends on the domain
+  staying registered — auto-renew is on.
 
 - **The Discord invite is permanent.** `discord.gg/q8EFs6CN2w` reports `expires_at: null`.
   **Check `expires_at`, not just whether the invite 200s** — a 30-day link dead-ends a month
