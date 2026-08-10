@@ -36,15 +36,25 @@
      measurement entirely. Read at spawn time rather than cached, so a downgrade
      partway through takes effect. */
   const tier = () => document.documentElement.dataset.q || "high";
-  const BURST = () => (tier() === "low" ? 14 : tier() === "mid" ? 28 : 48);
+  // Buffed from 48/28/14 on request. The burst is transient — it is gone inside
+  // ~4s and it is the one moment the page is allowed to be expensive — and the
+  // quality probe now waits until 4500ms so it no longer judges the machine on it.
+  const BURST = () => (tier() === "low" ? 22 : tier() === "mid" ? 48 : 84);
 
-  /* The brief gives two numbers for the drift that do not agree: "max 7 alive
-     at once" and a per-tier population target of 22 / 10 / 0. The tighter one
-     has to win or the drift stops being sparse, so 7 is the ceiling at high and
-     the tier targets set the ratio: 7 / 3 / 0. Low is zero rather than a thin
-     trickle for the ancestor's reason — below a certain density an ambient
-     effect reads as a bug rather than as calm. Change this one map to retune. */
-  const DRIFT_ALIVE = { high: 7, mid: 3, low: 0 };
+  /* Raised from 7/3/0 to match the Blissolic page's ambient bat population, which
+     the owner asked for by name. Those numbers, read off the deployed bats.js:
+     `fallMax()` caps at 20 / 9 / 0 and `FALL_EVERY` is 700ms.
+
+     The cap alone does not get you there — steady-state population is
+     min(cap, lifetime / interval). At the old 2100ms interval and a 12-20s
+     lifetime that is 16/2.1 = 7.6, so the interval was the real ceiling and
+     raising the cap by itself would have changed nothing. Hence DRIFT_EVERY
+     below.
+
+     Note phones land on `mid` before a single frame is measured, because
+     quality.js treats `(pointer: coarse)` as a starting hint — so a phone gets 9,
+     exactly like the Blissolic page does. */
+  const DRIFT_ALIVE = { high: 20, mid: 9, low: 0 };
   const driftMax = () => DRIFT_ALIVE[tier()] ?? 7;
 
   const rand = (min, max) => min + Math.random() * (max - min);
@@ -159,8 +169,13 @@
 
   /* ---------- effect 1: the emergence ---------- */
 
-  // where the burst comes from: behind the card, biased to its upper half so
-  // the swarm appears to lift out from around the hero
+  // Where the burst comes from: behind the card, across its WHOLE height.
+  //
+  // This used to spawn only in the top 4-62% of the card and send every butterfly
+  // upward, which put the entire swarm in a band around the hero and left the tile
+  // stack bare — it read as "they all appear in the centre". Now the spawn spans
+  // the full card and the travel direction is derived from where each one started,
+  // so the ones down by the tiles fan sideways and downward instead of all rising.
   function source() {
     const card = document.querySelector(".card");
     if (card) {
@@ -178,7 +193,10 @@
     const tints = pairs();
     const box = source();
     const n = BURST();
-    const SPREAD = 92; // degrees either side of straight up
+    // Widened from 92. At 92 the fan was a cone and the extremes still left
+    // upward; 124 puts the outermost bearings past horizontal, which combined with
+    // the fy-scaled rise below gives genuine downward dispersal at the bottom.
+    const SPREAD = 124; // degrees either side of straight up
 
     for (let i = 0; i < n; i++) {
       const bf = document.createElement("span");
@@ -211,12 +229,23 @@
       const deg = (((i + Math.random()) / n) * 2 - 1) * SPREAD;
       const rad = (deg * Math.PI) / 180;
       const side = deg === 0 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(deg);
+
+      /* fy is where this one starts down the card: 0 at the top, 1 at the bottom.
+         The vertical travel is scaled by it, and the scale crosses zero at about
+         70% down, so butterflies from the hero rise, ones level with the middle
+         tiles leave sideways, and ones from the bottom edge drop away below the
+         card. That is what stops the burst reading as a single clump: the swarm
+         now leaves in every direction because it did not all start in one place. */
+      const fy = rand(0.02, 0.98);
+      const rise = rand(58, 96) * (1.05 - fy * 1.5);
       const dx = Math.sin(rad) * rand(62, 95) + side * rand(5, 14);
-      const dy = -Math.cos(rad) * rand(62, 96) - rand(4, 12);
+      let dy = -Math.cos(rad) * rise;
+      // nothing should hover: give the near-horizontal ones a real vertical push
+      if (Math.abs(dy) < 16) dy = (dy < 0 ? -1 : 1) * rand(16, 26);
 
       const s = bf.style;
-      s.setProperty("--x", `${(box.left + rand(0.12, 0.88) * box.width).toFixed(0)}px`);
-      s.setProperty("--y", `${(box.top + rand(0.04, 0.62) * box.height).toFixed(0)}px`);
+      s.setProperty("--x", `${(box.left + rand(0.06, 0.94) * box.width).toFixed(0)}px`);
+      s.setProperty("--y", `${(box.top + fy * box.height).toFixed(0)}px`);
       s.setProperty("--size", `${size.toFixed(0)}px`);
       s.setProperty("--dx", `${dx.toFixed(1)}vw`);
       s.setProperty("--dy", `${dy.toFixed(1)}vh`);
@@ -280,7 +309,11 @@
   /* ---------- effect 2: the ambient drift ----------
      Sparse, calm and continuous: butterflies rising and crossing, forever. */
 
-  const DRIFT_EVERY = 2100; // ms between spawns
+  /* 800ms, not the old 2100ms. With a 12-20s crossing (mean 16s) this fills to
+     16 / 0.8 = 20, so the DRIFT_ALIVE cap is now the thing that binds rather than
+     the drip rate. Blissolic uses 700ms against a shorter 9-16s fall and settles
+     around 18 of its 20. */
+  const DRIFT_EVERY = 800; // ms between spawns
   let drifting = 0;
   let timer = null;
   let driftOn = false;
@@ -292,7 +325,11 @@
     const bf = document.createElement("span");
     bf.className = "bf-drift";
 
-    const size = rand(12, 28);
+    /* 16-38px, up from 12-28. Blissolic's ambient bats are 28-70px; matching that
+       outright would fight the tiles, but 12-28 was small enough that 20 of them
+       still read as "barely any". This is the midpoint that reads as a population
+       without competing with the text. */
+    const size = rand(16, 38);
 
     /* The first batch has to start part-way up the screen, or the page sits
        bare for twenty seconds waiting for one to arrive. The obvious way to do
@@ -320,7 +357,11 @@
       "--drift",
       `${((Math.random() < 0.5 ? -1 : 1) * rand(8, 34) * togo).toFixed(1)}vw`
     );
-    s.setProperty("--op", rand(0.18, 0.42).toFixed(2));
+    /* 0.30-0.58, up from 0.18-0.42. Count alone did not fix "barely any": at 0.18
+       these were genuinely invisible against a mid-luma photograph. Blissolic runs
+       its bats at 0.62-0.95, but it does so over a night sky - over this pink dawn
+       anything that opaque stops being ambient and starts being foreground. */
+    s.setProperty("--op", rand(0.3, 0.58).toFixed(2));
     s.setProperty("--pose", rand(0.55, 1).toFixed(2));
     // no filter anywhere in the drift, so all seven of them can flap freely
     s.setProperty("--flap", `${rand(120, 190).toFixed(0)}ms`);

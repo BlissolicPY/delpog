@@ -1,19 +1,30 @@
 /* ==========================================================================
    delpog
 
-   Palette sampled from her linktree/TikTok avatar (assets/pfp.png — a hamster in
-   headphones sitting in front of a pink-and-purple RGB battlestation) and from
-   the background photograph she chose (assets/bg.jpg — a hazy pink dawn over a
-   city skyline).
+   The palette was sampled from the avatar that was on her Linktree
+   (assets/pfp-hamster-linktree.png — a hamster in headphones in front of a
+   pink-and-purple RGB battlestation) and from the background photograph she chose
+   (assets/bg.jpg — a hazy pink dawn over a city skyline).
 
-   The interesting thing about this pair, and the reason the page works: the two
-   sources look like the same colour at a glance and are not. The avatar is
-   violet-dominant — 37.8% of its chromatic pixels are H240-269 indigo and 23.4%
-   are H270-299 purple, with only 8.0% in the magenta band. The photograph is the
-   mirror image: 75.9% H330-359 rose, 21.5% H300-329 magenta, and no indigo at
-   all. So they only overlap in H300-329, and everything on this page is built to
-   sit in or beside that overlap. That is where --orchid comes from, and it is
-   why an indigo accent and a rose accent can share a tile without arguing.
+   The interesting thing about that pair, and the reason the page works: the two
+   sources look like the same colour at a glance and are not. The avatar was
+   violet-dominant — 37.8% of its chromatic pixels H240-269 indigo, 23.4% H270-299
+   purple, only 8.0% in the magenta band. The photograph is the mirror image:
+   75.9% H330-359 rose, 21.5% H300-329 magenta, and no indigo at all. So they
+   overlapped only in H300-329, and everything here is built to sit in or beside
+   that overlap. That is where --orchid comes from, and it is why an indigo accent
+   and a rose accent can share a tile without arguing.
+
+   NOTE, and do not be confused by it: the hero image is no longer that avatar.
+   On request it was swapped to her actual TikTok avatar (assets/pfp.png — two pink
+   pixel-art hearts on near-white), which is a different picture, not a better copy
+   of the same one. The palette was NOT re-derived, and does not need to be: the
+   hearts sample at #F8B8D8 / #E888B8, i.e. H330 — within a few degrees of the
+   photograph's own rose band and of --rose (#F5A8C4) already defined below. What
+   the new avatar no longer supplies is the indigo end; --violet and --electric now
+   trace only to the old avatar, which is why it is kept in assets/ rather than
+   deleted. Re-derive from pfp-hamster-linktree.png if you ever need to show your
+   working.
    ========================================================================== */
 
 :root {
