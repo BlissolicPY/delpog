@@ -88,10 +88,17 @@
   window.addEventListener(
     "dp:enter",
     () => {
-      // wait out the entrance: the reveal and the gust are the heaviest two
+      // Wait out the entrance: the reveal and the butterfly burst are the heaviest
       // seconds the page ever has, and judging it on those would downgrade a
-      // machine that holds 60fps for the other 99% of the visit
-      setTimeout(() => probe(judge), 2600);
+      // machine that holds 60fps for the other 99% of the visit.
+      //
+      // 4500ms, not the 2600ms the sibling sites use. Their leaf gust is over
+      // sooner; this burst runs to about 3.9s worst case (max spawn delay plus max
+      // travel duration), so 2600 sampled the tail of the burst and could drop a
+      // capable machine to `mid` on the back of the one moment that is not
+      // representative. The probe itself only takes ~55 frames, so the later start
+      // costs nothing except deciding slightly later.
+      setTimeout(() => probe(judge), 4500);
       // one more look once everything has settled, in case the first was lucky
       setTimeout(() => probe(judge), 11000);
     },

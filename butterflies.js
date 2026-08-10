@@ -227,15 +227,20 @@
       s.setProperty("--delay", `${(rand(0, 0.42) + (1 - far) * 0.1).toFixed(2)}s`);
       s.setProperty("--op", (0.95 - far * 0.45).toFixed(2));
 
+      /* The resting pose, set on every butterfly even though the flap overrides
+         it: it is what the distant band keeps permanently, and what the whole
+         burst falls back to at the low tier and under reduced motion. Without it
+         a frozen batch is 14 identical rubber stamps. */
+      s.setProperty("--pose", rand(0.52, 1).toFixed(2));
+
       if (soft) {
-        /* Distance: a small static blur, a little darker, and a fixed wing
-           pose. The pose is what buys the blur — a flap inside a filter is the
-           bat mistake, and at 18–40px behind 1px of blur at half opacity a
-           still wing is not something anyone can see. */
+        /* Distance: a small static blur, a little darker, and that fixed pose.
+           The pose is what buys the blur — a flap inside a filter is the bat
+           mistake, and at 18–40px behind 1px of blur at half opacity a still
+           wing is not something anyone can see. */
         bf.classList.add("bf--soft");
         s.setProperty("--blur", `${rand(0.6, 1.5).toFixed(2)}px`);
         s.setProperty("--dim", rand(0.72, 0.9).toFixed(2));
-        s.setProperty("--pose", rand(0.52, 1).toFixed(2));
       } else {
         s.setProperty("--flap", `${rand(110, 190).toFixed(0)}ms`);
         // a NEGATIVE delay is the right tool here and only here: it desynchronises
@@ -316,6 +321,7 @@
       `${((Math.random() < 0.5 ? -1 : 1) * rand(8, 34) * togo).toFixed(1)}vw`
     );
     s.setProperty("--op", rand(0.18, 0.42).toFixed(2));
+    s.setProperty("--pose", rand(0.55, 1).toFixed(2));
     // no filter anywhere in the drift, so all seven of them can flap freely
     s.setProperty("--flap", `${rand(120, 190).toFixed(0)}ms`);
     s.setProperty("--flapPhase", `${-rand(0, 190).toFixed(0)}ms`);
@@ -328,8 +334,16 @@
     w.setProperty("--bob", `${rand(3, 9).toFixed(0)}px`);
     w.setProperty("--bank", `${rand(2, 7).toFixed(0)}deg`);
     w.setProperty("--wanderDur", `${rand(2.6, 5).toFixed(1)}s`);
-    // the ambient recedes, so it leans on the deeper pairs
-    wander.innerHTML = art(...pairs()[Math.random() < 0.35 ? 0 : 1], 0);
+    /* Both drift pairs end on --violet, so the body and the trailing margin
+       always carry the darkest tint available. That is not decoration: the top
+       of this page is a pale rose dawn, and at 12–28px and 0.2 opacity a
+       rose-into-orchid butterfly crossing it converges with the photograph and
+       stops reading at all. It is the ancestor's own complaint — its drift
+       painted in the background's own mid-tones "didn't look like it was even
+       there" — arriving from the opposite direction, a floor too light rather
+       than tints too dark. The burst is unaffected: it is over before anyone
+       looks that closely, and it uses all three pairs. */
+    wander.innerHTML = art(...pairs()[Math.random() < 0.3 ? 2 : 1], 0);
 
     bf.appendChild(wander);
     bf.addEventListener(
