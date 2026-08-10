@@ -4,9 +4,9 @@
 Static link page for **delpog** — a Twitch/TikTok streamer, a friend of the owner's.
 Sixth in the family after `../Jona Website`, `../Blissolic Website` (not present on this
 Mac), `../Dewier Website`, `../MangoPlayz Website` and `../Senkhi Website`. Ported from
-the MangoPlayz build: same architecture (intro gate, hidden YouTube player, page-view
-counter, cursor trail, adaptive quality ladder, one-screen layout), different palette,
-and butterflies instead of MangoPlayz's autumn leaves.
+the MangoPlayz build: same architecture (intro gate, hidden YouTube player, cursor trail,
+adaptive quality ladder), different palette, and butterflies instead of MangoPlayz's autumn
+leaves. No counters of any kind — see below.
 
 Everything on the page came off her Linktree (`linktr.ee/delpog`) on 2026-08-10.
 Four tiles, in **her** order — not re-sorted by size:
@@ -44,30 +44,38 @@ reintroduce either without being asked.
 Consequences to keep in mind if anything is added back: the reveal stagger runs `--i:0`
 through `--i:8` with no gaps, and the `abacus.jasoncameron.dev` preconnect is gone.
 
-## Palette — why this pair of sources works
+## Palette — derived from two images that have both since been replaced
 Sampled the same way as the siblings: 4-bit-per-channel bucket quantisation, over the
-inscribed circle for the avatar and the whole frame for the photograph.
+inscribed circle for an avatar and the whole frame for a background. **The swatch values
+were deliberately not re-derived when the images changed, because they still hold** — the
+history below exists only so nobody "corrects" a comment into a lie.
 
-The two sources **look like the same colour and are not**, and the whole page is built on
-that gap:
+Originally the pair was her old Linktree avatar and a pink-fog skyline photo, and they
+worked because they were opposites: the avatar was violet-dominant (37.8% of chromatic
+pixels H240–269 indigo, 23.4% H270–299 purple, only 8.0% magenta) and the photo was its
+mirror (75.9% H330–359 rose, no indigo at all). They overlapped only in H300–329, which is
+exactly where `--orchid #C88AE0` sits — the midpoint of the avatar's `#783898` and the
+photo's `#E898B8` — and that is why an indigo accent and a rose accent can share a tile
+without arguing. All three accents (`--orchid`, `--rose`, `--violet`) are **derived, not
+sampled**: the raw buckets are either too dark to read (`#682868` at L28) or unusable to
+look at (`#3808F8` at S94).
 
-- `assets/pfp.png` (her Linktree/TikTok avatar — a hamster in headphones in front of a
-  pink-and-purple RGB battlestation) is **violet-dominant**: 37.8% of its chromatic pixels
-  are H240–269 indigo, 23.4% H270–299 purple, only 8.0% in the magenta band. It also has
-  a genuine near-black — `#080808` is its single most common bucket at 2.33% — so unlike
-  the MangoPlayz build the page floor did not have to be invented, only hue-shifted.
-- `assets/bg.jpg` (the pink hazy skyline she chose) is the mirror image: **75.9% H330–359
-  rose**, 21.5% H300–329 magenta, and **no indigo at all**.
+What is on the page now:
 
-They overlap only in H300–329. `--orchid #C88AE0` is the midpoint of the avatar's
-`#783898` and the photo's `#E898B8`, i.e. it sits exactly in that overlap, and it is why
-an indigo accent and a rose accent can share a tile without arguing. All three accents
-(`--orchid`, `--rose`, `--violet`) are **derived, not sampled**, because the raw buckets
-are either too dark to read (`#682868` at L28) or unusable to look at (`#3808F8` at S94).
+- `assets/pfp.png` — her real **TikTok** avatar, two pink pixel-art hearts on near-white.
+  Samples `#F8B8D8` / `#E888B8`, i.e. H330, within a few degrees of `--rose`. Supplies no
+  violet at all.
+- `assets/bg.jpg` — the flat-art lakeside sunset, which spans the **entire** palette by
+  itself. See the background section below.
 
-`#3808F8` — the RGB light strip — survives in exactly one place: about 50° of the conic
-avatar ring, 2px wide, on a curve. At that size it reads as the light strip in her avatar
-rather than as a colour.
+So the accents are better grounded than when they were derived, and the one thing the new
+avatar no longer supplies — the indigo end that `--violet` and `--electric` trace to — is
+why `assets/pfp-hamster-linktree.png` is kept rather than deleted. Re-derive from it if you
+ever need to show the working.
+
+`#3808F8` survives in exactly one place: about 50° of the conic avatar ring, 2px wide, on a
+curve. At that size it reads as the RGB light strip in her old avatar rather than as a
+colour.
 
 ## Tile colours are all the platforms' own
 Twitch `#9146FF`, TikTok `#25F4EE`, Discord `#5865F2`, Spotify `#1ED760`. The siblings
@@ -82,52 +90,76 @@ TikTok's cyan has the monitor glow behind it (8.5% of the avatar is H180–209).
 recognisable thing about that link, the glyph carries the platform, and one contrasting
 accent in four reads as deliberate where a re-tint would read as a mistake.
 
-## The background photograph — do not "fix" its brightness in isolation
-Her source is **pale**: mean luma 177.9, dominant bucket `#F8D8D8`, which is white with a
-32-point RGB spread. That matters because **low chroma survives darkening badly**.
-Multiplying it down the way MangoPlayz darkened its sunset turned the whole image grey —
-at 0.5 brightness it measured H0 S18 and the dawn she picked it for was gone.
+## The background — and why the bake is now trivial
+`assets/bg.jpg` is a **flat-art lakeside sunset** (3840x2160 source, her pick, swapped in
+2026-08-10 replacing an earlier pink-fog photograph). It is a much better source: 100%
+chromatic, mean luma 87.7, already dark in the foreground where the tiles sit and bright
+only in the sky — and unlike either original palette source it spans the whole palette on
+its own: **H300-329 34%, H330-359 27%, H240-269 26%, H270-299 11%**, dominant `#282868`
+(H240 L28) in the trees and `#883878` (H312 L37) in the sky. The accents are better
+grounded now than when they were derived.
 
-So the bake raises chroma before lowering light, in this order:
+So the bake is just:
 
 ```
-saturation=1.85, contrast=1.12
-colorchannelmixer=rr=1.06:gg=0.86:bb=1.00
-lutrgb=val*0.60
-gblur=sigma=1.6
+scale=1600:900, eq=saturation=0.96, lutrgb=val*0.85, gblur=sigma=0.8   ->  luma 74.5
 ```
 
-- **contrast** is what keeps the skyline reading as a silhouette instead of dissolving
-  into the fog once it is dark.
-- **the channel mix** pushes the greys off neutral. An earlier pass used `bb=1.14` and
-  landed on H320 magenta — technically inside the palette, but it threw away the pink the
-  picture was chosen for. `bb=1.00` holds H330–340.
-- baked result: dominant `#987888` at H330, **mean luma 105.0**.
+0.8px of blur exists only to stop the gradient banding once JPEG quantises it.
 
-**105 is deliberately brighter than the MangoPlayz photo's 73.8, and the file looks pale
-on its own.** The reason is that this page's `.scrim` is much weaker than that one's.
-Judged as a composited page the two land in the same place; judged as a file this one
-looks washed out. Do not darken the bake toward 73 without also strengthening `.scrim`,
-or the dawn goes flat grey again — that is the exact loop that produced three rejected
-bakes.
+**What the previous background taught, which still applies to any future swap:** it was a
+photograph of pink fog whose dominant bucket was `#F8D8D8` — white with a 32-point RGB
+spread. **Low chroma survives darkening badly**, so multiplying it down turned the image
+grey rather than dark pink (H0 S18 at 0.5 brightness) and it needed saturation 1.85 plus a
+channel mix to rescue the colour *before* the light came down. Check a source's chroma
+first: that, not its brightness, decides how much work the bake has to do.
 
-Measured on the composited page at 1440x900, gate dismissed:
+**Re-measure legibility on every background swap, against the TOP tile.** The new image is
+brighter, and it silently pushed the top tile's handle line to **3.77:1** — under the 4.5:1
+AA floor — until the scrim was strengthened. The top tile sits on the brightest part of the
+image and is the worst case; the average is misleading.
 
-| | value | family reference |
+Measured on the composited page at 390x844 with the gate dismissed and the player visible:
+
+| | value | notes |
 |---|---|---|
-| page mean luma | 52.1 | 33–40 |
-| tile substrate | `rgb(59, 44, 58)` | 35.3 (MangoPlayz) |
-| `--text-soft` on the handle line | **7.34:1** | 4.5:1 AA floor |
-| `--text-dim` | 5.34:1 | — |
-| tile arrow (0.54 alpha) | 4.85:1 | 4.3:1 (MangoPlayz) |
+| page mean luma | 57.8 | family reference 33-40 |
+| top tile substrate | `rgb(115, 63, 91)` | worst case |
+| handle line, `--text-soft` 0.72 | **4.96:1** | 4.5:1 AA floor |
+| tile title, white | 7.83:1 | |
+| tile arrow, 0.62 alpha | ~4.3:1 | lifted from 0.54 |
 
-52.1 is above the family's 33–40 and that is accepted, not overlooked. The siblings'
-brightness problem was a *floor* that was too light; this floor is `#0A0610` at L4 and the
-lift comes from a photograph that occupies the top of the frame. Different cause, and
-darkening past this point costs the picture.
+## The phone layout — a bug that is latent in every sibling site
+The page once sat off-centre on a phone with the tile arrows clipped off the right edge.
+**The centring was never wrong.** The card was wider than the space it was being centred
+in. Two causes, both in the player:
 
-`assets/bg.jpg` is the untouched 1400x788 crop, kept to re-derive from. Nothing loads it.
-`meiying-ng-OrwkD-iWgqg-unsplash.jpg` in the owner's Downloads is the original 4697x3135.
+- **`.card` needs `min-width: 0`.** It is a grid item, and a grid item defaults to
+  `min-width: auto`, meaning "never narrower than your min-content". The player's
+  min-content is set by the track title, so on a 390px phone the card ignored its own
+  `width: 100%` (350px) and grew to 406px.
+- **`.player__title` needs `display: block`.** It is an `<a>`, i.e. `display: inline`, and
+  **`overflow: hidden` with `text-overflow: ellipsis` does nothing on an inline box.** So
+  the nowrap title never truncated — it just set that min-content width.
+
+With both, measured at 390px: card, tile and player all `left 20 / width 350 / right 370`,
+title ellipsising, no horizontal overflow. Also verified symmetric at 320 (20/280/300) and
+430 (20/390/410).
+
+**MangoPlayz and Senkhi share this markup** and only escape it because their track titles
+are short. A long title there reproduces it.
+
+Beyond that the page is responsive the way the family is — `place-items: center` plus
+`max-width: 27.5rem` plus `clamp()`, with one `@media (max-width: 26rem)` block for the
+four things that genuinely shrink. There are no `env(safe-area-inset-*)` rules, matching
+the siblings; nothing on a phone is edge-pinned, so it holds, but add them if anything ever
+is.
+
+**Do not trust a headless `--screenshot` for phone layout.** `--window-size` does not set
+the layout viewport, so it renders wide and crops, which looks exactly like an off-centre
+page. Use CDP `Emulation.setDeviceMetricsOverride` and read the box model. A screenshot
+that disagrees with the owner's phone is the screenshot being wrong — except when it
+isn't, which is how the real bug above went unfixed for a round.
 
 ## The music
 **Lizzy McAlpine — "the light in the painting"**, video `CEyHYCZAtOM`, 3:53. Lowercase
