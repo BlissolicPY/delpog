@@ -2,19 +2,23 @@
 
 ## Overview
 Static link page for **delpog** — a Twitch/TikTok streamer, a friend of the owner's.
-Sixth in the family after `../Jona Website`, `../Blissolic Website` (not present on this
-Mac), `../Dewier Website`, `../MangoPlayz Website` and `../Senkhi Website`. Ported from
+Sixth in the family after `../Jona Website`, `../Blissolic Website`, `../Dewier Website`,
+`../MangoPlayz Website` and `../Senkhi Website`. (An earlier draft said the Blissolic folder was not
+present on this Mac. It was — a mis-escaped `mv` had renamed it to a literal `\`, which also made
+the backup repo see all 28 of its tracked files as deleted. Fixed 2026-08-11.) Ported from
 the MangoPlayz build: same architecture (intro gate, hidden YouTube player, cursor trail,
 adaptive quality ladder), different palette, and butterflies instead of MangoPlayz's autumn
 leaves. No counters of any kind — see below.
 
 Everything on the page came off her Linktree (`linktr.ee/delpog`) on 2026-08-10.
-Four tiles, in **her** order — not re-sorted by size:
+The first four tiles are in **her** order — not re-sorted by size:
 
 1. **Twitch** — `twitch.tv/delpog`
 2. **TikTok** — `@delpoglive`
 3. **Discord** — `discord.gg/q8EFs6CN2w` ("delpog nation", guild `1424176602920783906`)
 4. **Spotify** — `open.spotify.com/user/2txaxzuc4hljq19gimeivexkh`
+5. **NameMC** — `namemc.com/profile/delpog`, added 2026-08-11 at the owner's request and not from
+   the Linktree. Her Minecraft name is `delpog`, confirmed against the Mojang lookup.
 
 No build step, no deps, no API keys — open `index.html` or serve the folder.
 
@@ -77,7 +81,7 @@ ever need to show the working.
 curve. At that size it reads as the RGB light strip in her old avatar rather than as a
 colour.
 
-## Tile colours are all the platforms' own
+## Tile colours are the platforms' own, except NameMC's
 Twitch `#9146FF`, TikTok `#25F4EE`, Discord `#5865F2`, Spotify `#1ED760`. The siblings
 re-tinted tiles only when two of them would otherwise have shared a colour and the tile
 stopped saying which was which (three YouTube channels on the MangoPlayz page); that does
@@ -89,6 +93,20 @@ TikTok's cyan has the monitor glow behind it (8.5% of the avatar is H180–209).
 **Spotify's green is the one genuine outsider and it stays green** — it is the most
 recognisable thing about that link, the glyph carries the platform, and one contrasting
 accent in four reads as deliberate where a re-tint would read as a mistake.
+
+**NameMC is the exception to the heading, and its gold `#FFAA00` is a real choice (added
+2026-08-11).** NameMC has no brand colour anyone would recognise, so the field was open — and the
+obvious Minecraft grass green is exactly what not to use here, because Spotify's `#1ED760` is one
+row up and two greens in five tiles stop saying which is which, the same trap the MangoPlayz page's
+three YouTube channels set. Minecraft's UI gold is unmistakably Minecraft, it has the sunset behind
+it, and it was the one warm hue free on all three pages that took this tile, so Blissolic and Senkhi
+carry the same value. The glyph does the identifying: a hand-built isometric block, three inset
+quads in one 24×24 fill path, in the same fill-not-stroke style as the platform marks. The tile sits
+last because the owner's framing was that NameMC is not that important; the page still fits one
+screen with it (1061px of content is Senkhi's problem, not this one — measured 900px at 420×900).
+**namemc.com cannot be fetched to check the link**: Cloudflare answers curl with a challenge page.
+`api.mojang.com/users/profiles/minecraft/<name>` is the cheap check, and it returns the canonical
+casing too.
 
 ## The background — and why the bake is now trivial
 `assets/bg.jpg` is a **flat-art lakeside sunset** (3840x2160 source, her pick, swapped in
